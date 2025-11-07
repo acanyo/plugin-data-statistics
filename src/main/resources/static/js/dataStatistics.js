@@ -608,7 +608,7 @@ function xhhaocomDataStatisticsUpdateCharts(data) {
             }))
             .sort((a, b) => b.value - a.value)
             .slice(0, 10);
-        
+
         xhhaocomDataStatisticsTagOption.series[0].data = xhhaocomDataStatisticsTagData;
         xhhaocomDataStatisticsTagChart.setOption(xhhaocomDataStatisticsTagOption);
     }
@@ -635,7 +635,7 @@ function xhhaocomDataStatisticsUpdateCharts(data) {
     if (data.categories && Array.isArray(data.categories)) {
         const xhhaocomDataStatisticsCategoryNames = data.categories.map(cat => cat.name || '未知');
         const xhhaocomDataStatisticsCategoryValues = data.categories.map(cat => cat.total || 0);
-        
+
         xhhaocomDataStatisticsCategoryOption.xAxis.data = xhhaocomDataStatisticsCategoryNames;
         xhhaocomDataStatisticsCategoryOption.series[0].data = xhhaocomDataStatisticsCategoryValues;
         xhhaocomDataStatisticsCategoryChart.setOption(xhhaocomDataStatisticsCategoryOption);
@@ -656,7 +656,7 @@ function xhhaocomDataStatisticsUpdateCharts(data) {
                 }
                 return displayName;
             });
-        
+
         const xhhaocomDataStatisticsCommentData = [];
         data.comments.slice(0, 10).forEach((comment, index) => {
             const count = comment.count || 0;
@@ -681,7 +681,7 @@ function xhhaocomDataStatisticsUpdateCharts(data) {
     if (data.top10Articles && Array.isArray(data.top10Articles)) {
         const xhhaocomDataStatisticsPopularArticles = data.top10Articles.map(article => article.name || '未知文章');
         const xhhaocomDataStatisticsPopularViews = data.top10Articles.map(article => article.views || 0);
-        
+
         // 保存完整标题用于 tooltip
         xhhaocomDataStatisticsPopularOption.xAxis[0].fullTitles = xhhaocomDataStatisticsPopularArticles;
         xhhaocomDataStatisticsPopularOption.xAxis[0].data = xhhaocomDataStatisticsPopularArticles.map(title => {
@@ -707,7 +707,7 @@ const xhhaocomDataStatisticsResizeHandler = function() {
     xhhaocomDataStatisticsCategoryChart.resize();
     xhhaocomDataStatisticsCommentChart.resize();
     xhhaocomDataStatisticsPopularChart.resize();
-    
+
     // 重新计算评论者图表的 jitter 值
     if (xhhaocomDataStatisticsCommentOption.xAxis.data && xhhaocomDataStatisticsCommentOption.xAxis.data.length > 0) {
         const xhhaocomDataStatisticsCommentNewWidth = xhhaocomDataStatisticsCommentChart.getWidth() - xhhaocomDataStatisticsCommentGrid.left - xhhaocomDataStatisticsCommentGrid.right;
@@ -716,3 +716,477 @@ const xhhaocomDataStatisticsResizeHandler = function() {
     }
 };
 window.addEventListener('resize', xhhaocomDataStatisticsResizeHandler);
+
+// ==================== Umami 统计报表 ====================
+
+// 获取Umami网站列表
+function xhhaocomDataStatisticsGetUmamiWebsites() {
+    return fetch('/apis/api.data.statistics.xhhao.com/v1alpha1/umami/websites')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('网络响应错误');
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('获取Umami网站列表失败:', error);
+            return null;
+        });
+}
+
+// 获取Umami统计数据
+function xhhaocomDataStatisticsGetUmamiStats(websiteId, startAt, endAt) {
+    // 如果websiteId为空，不传该参数，后端会自动获取
+    let url = `/apis/api.data.statistics.xhhao.com/v1alpha1/umami/stats?startAt=${startAt}&endAt=${endAt}`;
+    if (websiteId) {
+        url += `&websiteId=${websiteId}`;
+    }
+    return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('网络响应错误');
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('获取Umami统计数据失败:', error);
+            return null;
+        });
+}
+
+// 获取Umami实时数据
+function xhhaocomDataStatisticsGetUmamiRealtime(websiteId) {
+    // 如果websiteId为空，不传该参数，后端会自动获取
+    let url = '/apis/api.data.statistics.xhhao.com/v1alpha1/umami/realtime';
+    if (websiteId) {
+        url += `?websiteId=${websiteId}`;
+    }
+    return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('网络响应错误');
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('获取Umami实时数据失败:', error);
+            return null;
+        });
+}
+
+// Umami 统计数据图表 - 页面浏览量
+let xhhaocomDataStatisticsUmamiPageviewsChart = null;
+const xhhaocomDataStatisticsUmamiPageviewsOption = {
+    animation: true,
+    animationDuration: 1000,
+    animationEasing: 'cubicOut',
+    backgroundColor: 'transparent',
+    title: {
+        top: 10,
+        left: 'center',
+        text: 'Umami - 页面浏览量',
+        textStyle: {
+            color: '#2c3e50',
+            fontSize: 18,
+            fontWeight: 600
+        }
+    },
+    tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        borderColor: '#5470c6',
+        borderWidth: 1,
+        textStyle: {
+            color: '#fff',
+            fontSize: 13
+        },
+        padding: [10, 15],
+        borderRadius: 8
+    },
+    grid: {
+        left: '5%',
+        right: '5%',
+        bottom: '8%',
+        top: '15%',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'category',
+        data: [],
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12,
+            fontWeight: 500
+        }
+    },
+    yAxis: {
+        type: 'value',
+        name: '浏览量',
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12
+        },
+        splitLine: {
+            lineStyle: {
+                color: '#f0f0f0',
+                type: 'solid',
+                width: 1
+            }
+        }
+    },
+    series: [{
+        name: '页面浏览量',
+        type: 'line',
+        smooth: true,
+        data: [],
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+            width: 3,
+            color: '#5470c6'
+        },
+        itemStyle: {
+            color: '#5470c6',
+            borderColor: '#fff',
+            borderWidth: 2
+        },
+        areaStyle: {
+            color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                    offset: 0,
+                    color: 'rgba(84, 112, 198, 0.4)'
+                }, {
+                    offset: 1,
+                    color: 'rgba(84, 112, 198, 0.05)'
+                }]
+            }
+        }
+    }]
+};
+
+// Umami 统计数据图表 - 独立访客
+let xhhaocomDataStatisticsUmamiUniquesChart = null;
+const xhhaocomDataStatisticsUmamiUniquesOption = {
+    animation: true,
+    animationDuration: 1000,
+    animationEasing: 'cubicOut',
+    backgroundColor: 'transparent',
+    title: {
+        top: 10,
+        left: 'center',
+        text: 'Umami - 独立访客',
+        textStyle: {
+            color: '#2c3e50',
+            fontSize: 18,
+            fontWeight: 600
+        }
+    },
+    tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        borderColor: '#91cc75',
+        borderWidth: 1,
+        textStyle: {
+            color: '#fff',
+            fontSize: 13
+        },
+        padding: [10, 15],
+        borderRadius: 8
+    },
+    grid: {
+        left: '5%',
+        right: '5%',
+        bottom: '8%',
+        top: '15%',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'category',
+        data: [],
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12,
+            fontWeight: 500
+        }
+    },
+    yAxis: {
+        type: 'value',
+        name: '访客数',
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12
+        },
+        splitLine: {
+            lineStyle: {
+                color: '#f0f0f0',
+                type: 'solid',
+                width: 1
+            }
+        }
+    },
+    series: [{
+        name: '独立访客',
+        type: 'bar',
+        barWidth: '60%',
+        data: [],
+        itemStyle: {
+            color: '#91cc75',
+            borderRadius: [8, 8, 0, 0]
+        }
+    }]
+};
+
+// Umami 实时数据图表
+let xhhaocomDataStatisticsUmamiRealtimeChart = null;
+const xhhaocomDataStatisticsUmamiRealtimeOption = {
+    animation: true,
+    animationDuration: 1000,
+    animationEasing: 'cubicOut',
+    backgroundColor: 'transparent',
+    title: {
+        top: 10,
+        left: 'center',
+        text: 'Umami - 实时数据',
+        textStyle: {
+            color: '#2c3e50',
+            fontSize: 18,
+            fontWeight: 600
+        }
+    },
+    tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        borderColor: '#fac858',
+        borderWidth: 1,
+        textStyle: {
+            color: '#fff',
+            fontSize: 13
+        },
+        padding: [10, 15],
+        borderRadius: 8
+    },
+    legend: {
+        top: 40,
+        data: ['页面浏览量', '访客数']
+    },
+    grid: {
+        left: '5%',
+        right: '5%',
+        bottom: '8%',
+        top: '20%',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'category',
+        data: [],
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12,
+            fontWeight: 500
+        }
+    },
+    yAxis: {
+        type: 'value',
+        axisLine: {
+            show: false
+        },
+        axisTick: {
+            show: false
+        },
+        axisLabel: {
+            color: '#666',
+            fontSize: 12
+        },
+        splitLine: {
+            lineStyle: {
+                color: '#f0f0f0',
+                type: 'solid',
+                width: 1
+            }
+        }
+    },
+    series: [{
+        name: '页面浏览量',
+        type: 'line',
+        smooth: true,
+        data: [],
+        lineStyle: {
+            width: 3,
+            color: '#fac858'
+        },
+        itemStyle: {
+            color: '#fac858'
+        }
+    }, {
+        name: '访客数',
+        type: 'line',
+        smooth: true,
+        data: [],
+        lineStyle: {
+            width: 3,
+            color: '#ee6666'
+        },
+        itemStyle: {
+            color: '#ee6666'
+        }
+    }]
+};
+
+// 更新Umami统计数据图表
+function xhhaocomDataStatisticsUpdateUmamiCharts(stats) {
+    if (!stats) {
+        console.error('Umami统计数据为空');
+        return;
+    }
+
+    // 更新页面浏览量图表
+    if (stats.pageviewsData && Array.isArray(stats.pageviewsData)) {
+        const xhhaocomDataStatisticsPageviewsData = stats.pageviewsData.map(item => ({
+            name: item.x,
+            value: item.y
+        }));
+        xhhaocomDataStatisticsUmamiPageviewsOption.xAxis.data = xhhaocomDataStatisticsPageviewsData.map(item => item.name);
+        xhhaocomDataStatisticsUmamiPageviewsOption.series[0].data = xhhaocomDataStatisticsPageviewsData.map(item => item.value);
+
+        const xhhaocomDataStatisticsUmamiPageviewsChartElement = document.getElementById('xhhaocom-dataStatistics-umamiPageviewsChart');
+        if (xhhaocomDataStatisticsUmamiPageviewsChartElement) {
+            if (!xhhaocomDataStatisticsUmamiPageviewsChart) {
+                xhhaocomDataStatisticsUmamiPageviewsChart = echarts.init(xhhaocomDataStatisticsUmamiPageviewsChartElement);
+            }
+            xhhaocomDataStatisticsUmamiPageviewsChart.setOption(xhhaocomDataStatisticsUmamiPageviewsOption);
+        }
+    }
+
+    // 更新独立访客图表
+    if (stats.uniquesData && Array.isArray(stats.uniquesData)) {
+        const xhhaocomDataStatisticsUniquesData = stats.uniquesData.map(item => ({
+            name: item.x,
+            value: item.y
+        }));
+        xhhaocomDataStatisticsUmamiUniquesOption.xAxis.data = xhhaocomDataStatisticsUniquesData.map(item => item.name);
+        xhhaocomDataStatisticsUmamiUniquesOption.series[0].data = xhhaocomDataStatisticsUniquesData.map(item => item.value);
+
+        const xhhaocomDataStatisticsUmamiUniquesChartElement = document.getElementById('xhhaocom-dataStatistics-umamiUniquesChart');
+        if (xhhaocomDataStatisticsUmamiUniquesChartElement) {
+            if (!xhhaocomDataStatisticsUmamiUniquesChart) {
+                xhhaocomDataStatisticsUmamiUniquesChart = echarts.init(xhhaocomDataStatisticsUmamiUniquesChartElement);
+            }
+            xhhaocomDataStatisticsUmamiUniquesChart.setOption(xhhaocomDataStatisticsUmamiUniquesOption);
+        }
+    }
+}
+
+// 更新Umami实时数据图表
+function xhhaocomDataStatisticsUpdateUmamiRealtimeChart(realtime) {
+    if (!realtime) {
+        console.error('Umami实时数据为空');
+        return;
+    }
+
+    if (realtime.data && Array.isArray(realtime.data)) {
+        const xhhaocomDataStatisticsRealtimeTimes = realtime.data.map(item => item.x);
+        const xhhaocomDataStatisticsRealtimePageviews = realtime.data.map(item => item.y);
+        const xhhaocomDataStatisticsRealtimeVisitors = new Array(realtime.data.length).fill(realtime.visitors || 0);
+
+        xhhaocomDataStatisticsUmamiRealtimeOption.xAxis.data = xhhaocomDataStatisticsRealtimeTimes;
+        xhhaocomDataStatisticsUmamiRealtimeOption.series[0].data = xhhaocomDataStatisticsRealtimePageviews;
+        xhhaocomDataStatisticsUmamiRealtimeOption.series[1].data = xhhaocomDataStatisticsRealtimeVisitors;
+
+        const xhhaocomDataStatisticsUmamiRealtimeChartElement = document.getElementById('xhhaocom-dataStatistics-umamiRealtimeChart');
+        if (xhhaocomDataStatisticsUmamiRealtimeChartElement) {
+            if (!xhhaocomDataStatisticsUmamiRealtimeChart) {
+                xhhaocomDataStatisticsUmamiRealtimeChart = echarts.init(xhhaocomDataStatisticsUmamiRealtimeChartElement);
+            }
+            xhhaocomDataStatisticsUmamiRealtimeChart.setOption(xhhaocomDataStatisticsUmamiRealtimeOption);
+        }
+    }
+}
+
+// 初始化Umami统计报表
+function xhhaocomDataStatisticsInitUmami() {
+    // 获取最近30天的统计数据（不传websiteId，后端会自动获取）
+    const xhhaocomDataStatisticsEndAt = Date.now();
+    const xhhaocomDataStatisticsStartAt = xhhaocomDataStatisticsEndAt - (30 * 24 * 60 * 60 * 1000);
+
+    // 获取统计数据（不传websiteId，后端会自动使用配置的或第一个网站）
+    xhhaocomDataStatisticsGetUmamiStats('', xhhaocomDataStatisticsStartAt, xhhaocomDataStatisticsEndAt)
+        .then(stats => {
+            if (stats) {
+                xhhaocomDataStatisticsUpdateUmamiCharts(stats);
+            }
+        });
+
+    // 获取实时数据（不传websiteId，后端会自动使用配置的或第一个网站）
+    xhhaocomDataStatisticsGetUmamiRealtime('')
+        .then(realtime => {
+            if (realtime) {
+                xhhaocomDataStatisticsUpdateUmamiRealtimeChart(realtime);
+            }
+        });
+
+    // 每30秒刷新一次实时数据
+    setInterval(() => {
+        xhhaocomDataStatisticsGetUmamiRealtime('')
+            .then(realtime => {
+                if (realtime) {
+                    xhhaocomDataStatisticsUpdateUmamiRealtimeChart(realtime);
+                }
+            });
+    }, 30000);
+}
+
+// 窗口大小改变时调整Umami图表
+const xhhaocomDataStatisticsUmamiResizeHandler = function() {
+    if (xhhaocomDataStatisticsUmamiPageviewsChart) {
+        xhhaocomDataStatisticsUmamiPageviewsChart.resize();
+    }
+    if (xhhaocomDataStatisticsUmamiUniquesChart) {
+        xhhaocomDataStatisticsUmamiUniquesChart.resize();
+    }
+    if (xhhaocomDataStatisticsUmamiRealtimeChart) {
+        xhhaocomDataStatisticsUmamiRealtimeChart.resize();
+    }
+};
+window.addEventListener('resize', xhhaocomDataStatisticsUmamiResizeHandler);
+
+// 页面加载完成后初始化Umami统计报表
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', xhhaocomDataStatisticsInitUmami);
+} else {
+    xhhaocomDataStatisticsInitUmami();
+}

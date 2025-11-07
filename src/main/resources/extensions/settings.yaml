@@ -93,3 +93,10 @@ spec:
           label:  密码
           placeholder: 请输入你的 umami 密码
           help: 必填，用于 API 获取你的 umamiAPI Token 使用
+        - $formkit: text
+          name: websiteId
+          id: websiteId
+          key: websiteId
+          label: 网站ID
+          placeholder: 留空则自动获取第一个网站
+          help: 可选，指定要统计的网站ID。如果留空，将自动使用第一个网站。可通过获取网站列表API查看所有网站ID
