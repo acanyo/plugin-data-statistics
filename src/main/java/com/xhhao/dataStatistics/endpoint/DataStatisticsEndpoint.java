@@ -1,12 +1,13 @@
 package com.xhhao.dataStatistics.endpoint;
 
 import static org.springdoc.core.fn.builders.apiresponse.Builder.responseBuilder;
+import static org.springdoc.core.fn.builders.parameter.Builder.parameterBuilder;
+import static org.springdoc.core.fn.builders.schema.Builder.schemaBuilder;
 
 import cn.hutool.core.util.StrUtil;
 import com.xhhao.dataStatistics.service.StatisticalService;
 import com.xhhao.dataStatistics.service.UmamiService;
 import com.xhhao.dataStatistics.vo.PieChartVO;
-import com.xhhao.dataStatistics.vo.UmamiStatisticsVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.webflux.core.fn.SpringdocRouteBuilder;
@@ -18,8 +19,6 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import run.halo.app.core.extension.endpoint.CustomEndpoint;
 import run.halo.app.extension.GroupVersion;
-
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -48,38 +47,35 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                     .description("获取Umami网站列表")
                     .tag(tag)
                     .response(responseBuilder()
-                        .implementation(UmamiStatisticsVO.class)
                         .responseCode("200")
-                        .description("成功返回网站列表")
+                        .description("成功返回网站列表（原始JSON）")
                     );
             })
-            .GET("/umami/stats", this::fetchUmamiStats, builder -> {
-                builder.operationId("fetchUmamiStats")
-                    .description("获取Umami网站统计数据。websiteId参数可选，不传则使用配置中的websiteId或自动获取第一个网站")
+            .GET("/umami/visits", this::fetchVisits, builder -> {
+                builder.operationId("fetchVisits")
+                    .description("获取访问统计（支持日、周、月、季、年）")
                     .tag(tag)
+                    .parameter(parameterBuilder()
+                        .name("type")
+                        .description("统计类型，可选值：daily(日统计，默认1天=24小时), weekly(周统计，默认1周=7天), monthly(月统计，默认1月=30天), quarterly(季统计，默认1季=3个月=90天), yearly(年统计，默认1年=365天)")
+                        .required(true)
+                        .schema(schemaBuilder()
+                            .type("string")
+                            .example("daily")
+                        )
+                    )
                     .response(responseBuilder()
-                        .implementation(UmamiStatisticsVO.WebsiteStats.class)
                         .responseCode("200")
-                        .description("成功返回统计数据")
+                        .description("成功返回访问统计数据")
                     );
             })
-            .GET("/umami/realtime", this::fetchUmamiRealtime, builder -> {
-                builder.operationId("fetchUmamiRealtime")
-                    .description("获取Umami实时数据。websiteId参数可选，不传则使用配置中的websiteId或自动获取第一个网站")
-                    .tag(tag)
-                    .response(responseBuilder()
-                        .implementation(UmamiStatisticsVO.RealtimeData.class)
-                        .responseCode("200")
-                        .description("成功返回实时数据")
-                    );
-            })
-            .GET("/umami/website-id", this::fetchCurrentWebsiteId, builder -> {
-                builder.operationId("fetchCurrentWebsiteId")
-                    .description("获取当前使用的网站ID（配置中的或自动获取的第一个）")
+            .GET("/umami/realtime", this::fetchRealtimeVisits, builder -> {
+                builder.operationId("fetchRealtimeVisits")
+                    .description("获取实时访问统计")
                     .tag(tag)
                     .response(responseBuilder()
                         .responseCode("200")
-                        .description("成功返回网站ID")
+                        .description("成功返回实时访问数据")
                     );
             })
             .build();
@@ -100,7 +96,6 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
     private Mono<ServerResponse> fetchUmamiWebsites(ServerRequest request) {
         return umamiService.getWebsites()
             .flatMap(data -> ServerResponse.ok().bodyValue(data))
-            .switchIfEmpty(ServerResponse.ok().bodyValue(new UmamiStatisticsVO()))
             .onErrorResume(e -> {
                 log.error("获取Umami网站列表失败", e);
                 return ServerResponse.status(500)
@@ -109,65 +104,48 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
             });
     }
 
-    private Mono<ServerResponse> fetchUmamiStats(ServerRequest request) {
-        String websiteIdParam = request.queryParam("websiteId").orElse("");
-        String startAtStr = request.queryParam("startAt").orElse("0");
-        String endAtStr = request.queryParam("endAt").orElse("0");
-
-        try {
-            Long startAt = Long.parseLong(startAtStr);
-            Long endAt = Long.parseLong(endAtStr);
-            
-            // 如果提供了websiteId参数则使用，否则自动获取
-            Mono<String> websiteIdMono = StrUtil.isBlank(websiteIdParam)
-                ? umamiService.getWebsiteId()
-                : Mono.just(websiteIdParam);
-            
-            return websiteIdMono
-                .flatMap(websiteId -> umamiService.getWebsiteStats(websiteId, startAt, endAt))
-                .flatMap(data -> ServerResponse.ok().bodyValue(data))
-                .onErrorResume(e -> {
-                    log.error("获取Umami统计数据失败", e);
-                    return ServerResponse.status(500)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue("获取Umami统计数据失败: " + e.getMessage());
-                });
-        } catch (NumberFormatException e) {
+    /**
+     * 获取访问统计（统一接口）
+     * 查询参数：
+     * - type: 统计类型（daily/weekly/monthly/quarterly/yearly），必填，period 会根据 type 自动设置默认值
+     */
+    private Mono<ServerResponse> fetchVisits(ServerRequest request) {
+        String typeParam = request.queryParam("type").orElse("daily");
+        
+        // 验证 type 参数
+        if (!typeParam.matches("daily|weekly|monthly|quarterly|yearly")) {
             return ServerResponse.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("时间参数格式错误");
+                .bodyValue("type 参数错误，支持的值: daily, weekly, monthly, quarterly, yearly");
         }
-    }
-
-    private Mono<ServerResponse> fetchUmamiRealtime(ServerRequest request) {
-        String websiteIdParam = request.queryParam("websiteId").orElse("");
         
-        // 如果提供了websiteId参数则使用，否则自动获取
-        Mono<String> websiteIdMono = StrUtil.isBlank(websiteIdParam)
-            ? umamiService.getWebsiteId()
-            : Mono.just(websiteIdParam);
-
-        return websiteIdMono
-            .flatMap(websiteId -> umamiService.getRealtimeData(websiteId))
+        // websiteId 从配置获取，时间范围根据 type 自动计算
+        return umamiService.getVisitStatistics(null, typeParam)
             .flatMap(data -> ServerResponse.ok().bodyValue(data))
             .onErrorResume(e -> {
-                log.error("获取Umami实时数据失败", e);
+                log.error("获取{}访问统计失败", typeParam, e);
                 return ServerResponse.status(500)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue("获取Umami实时数据失败: " + e.getMessage());
+                    .bodyValue("获取" + typeParam + "访问统计失败: " + e.getMessage());
             });
     }
 
-    private Mono<ServerResponse> fetchCurrentWebsiteId(ServerRequest request) {
-        return umamiService.getWebsiteId()
-            .flatMap(websiteId -> ServerResponse.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(Map.of("websiteId", websiteId)))
+    /**
+     * 获取实时访问统计
+     * 查询参数：
+     * - websiteId: 网站ID（可选，不传则使用第一个网站）
+     */
+    private Mono<ServerResponse> fetchRealtimeVisits(ServerRequest request) {
+        String websiteIdParam = request.queryParam("websiteId").orElse("");
+        String finalWebsiteId = StrUtil.isBlank(websiteIdParam) ? null : websiteIdParam;
+        
+        return umamiService.getRealtimeVisitStatistics(finalWebsiteId)
+            .flatMap(data -> ServerResponse.ok().bodyValue(data))
             .onErrorResume(e -> {
-                log.error("获取当前网站ID失败", e);
+                log.error("获取实时访问统计失败", e);
                 return ServerResponse.status(500)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue("获取当前网站ID失败: " + e.getMessage());
+                    .bodyValue("获取实时访问统计失败: " + e.getMessage());
             });
     }
 
