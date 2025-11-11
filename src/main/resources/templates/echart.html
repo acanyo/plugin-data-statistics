@@ -12,27 +12,76 @@
     <div class="xhhaocom-dataStatistics-container">
         <h1 class="xhhaocom-dataStatistics-title" th:text="${title != null ? title : '数据统计'}">数据统计</h1>
         
+        <!-- Halo 内容统计 -->
         <div class="xhhaocom-dataStatistics-section">
-            <div id="xhhaocom-dataStatistics-tagChart" class="xhhaocom-dataStatistics-chart"></div>
+            <div class="xhhaocom-dataStatistics-tag"></div>
         </div>
         
         <div class="xhhaocom-dataStatistics-section">
-            <div id="xhhaocom-dataStatistics-postChart" class="xhhaocom-dataStatistics-chart xhhaocom-dataStatistics-calendarChart"></div>
+            <div class="xhhaocom-dataStatistics-article"></div>
         </div>
         
         <div class="xhhaocom-dataStatistics-section">
-            <div id="xhhaocom-dataStatistics-categoryChart" class="xhhaocom-dataStatistics-chart"></div>
+            <div class="xhhaocom-dataStatistics-category"></div>
         </div>
         
         <div class="xhhaocom-dataStatistics-section">
-            <div id="xhhaocom-dataStatistics-commentChart" class="xhhaocom-dataStatistics-chart"></div>
+            <div class="xhhaocom-dataStatistics-comment"></div>
         </div>
         
         <div class="xhhaocom-dataStatistics-section">
-            <div id="xhhaocom-dataStatistics-popularChart" class="xhhaocom-dataStatistics-chart"></div>
+            <div class="xhhaocom-dataStatistics-popular"></div>
+        </div>
+        
+        <!-- Umami 访问统计 -->
+        <div class="xhhaocom-dataStatistics-umami-section">
+            <h2 class="xhhaocom-dataStatistics-umami-title">Umami 访问统计</h2>
+            
+            <!-- 时间范围选择器 -->
+        
+            <!-- 访问统计图表 -->
+            <div class="xhhaocom-dataStatistics-section">
+                <div class="xhhaocom-dataStatistics-visit" type="weekly"></div>
+            </div>
+            
+            <!-- 实时访问统计 -->
+            <div class="xhhaocom-dataStatistics-section">
+                <div class="xhhaocom-dataStatistics-umami-realtime-header">
+                    <h3 class="xhhaocom-dataStatistics-umami-realtime-title">实时访问统计</h3>
+                    <span class="xhhaocom-dataStatistics-umami-realtime-indicator">
+                        <span class="xhhaocom-dataStatistics-umami-realtime-dot"></span>
+                        实时更新中
+                    </span>
+                </div>
+                <div class="xhhaocom-dataStatistics-realtime"></div>
+            </div>
         </div>
     </div>
     <script src="/plugins/data-statistics/assets/static/js/dataStatistics.js"></script>
+    <script>
+        // 绑定时间选择器和刷新按钮
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeTypeSelect = document.getElementById('xhhaocom-dataStatistics-umami-timeType');
+            const refreshBtn = document.getElementById('xhhaocom-dataStatistics-umami-refresh');
+            
+            if (timeTypeSelect && refreshBtn) {
+                const visitElement = document.querySelector('.xhhaocom-dataStatistics-visit');
+                
+                function updateVisitChart() {
+                    if (visitElement) {
+                        const type = timeTypeSelect.value;
+                        visitElement.setAttribute('type', type);
+                        // 重新初始化
+                        if (window.xhhaocomDataStatisticsInit) {
+                            window.xhhaocomDataStatisticsInit();
+                        }
+                    }
+                }
+                
+                timeTypeSelect.addEventListener('change', updateVisitChart);
+                refreshBtn.addEventListener('click', updateVisitChart);
+            }
+        });
+    </script>
 </body>
 </html>
-

@@ -1,3 +1,4 @@
+/* ==================== 全局样式 ==================== */
 .xhhaocom-dataStatistics-wrapper {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -55,30 +56,164 @@
     margin-bottom: 0;
 }
 
-.xhhaocom-dataStatistics-sectionTitle {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #666;
-    font-weight: 500;
-    transition: color 0.3s ease;
-    margin-top: 0;
-}
-
 .xhhaocom-dataStatistics-chart {
     width: 100%;
     height: 400px;
     box-sizing: border-box;
 }
 
-#xhhaocom-dataStatistics-tagChart {
-    cursor: pointer;
-}
-
 .xhhaocom-dataStatistics-calendarChart {
     height: 200px;
 }
 
+/* ==================== Umami 统计区域 ==================== */
+.xhhaocom-dataStatistics-umami-section {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 2px solid rgba(84, 112, 198, 0.2);
+}
 
+.xhhaocom-dataStatistics-umami-title {
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+.xhhaocom-dataStatistics-umami-controls {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.xhhaocom-dataStatistics-umami-time-selector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.xhhaocom-dataStatistics-umami-time-selector label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.xhhaocom-dataStatistics-umami-select {
+    padding: 8px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #2c3e50;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+.xhhaocom-dataStatistics-umami-select:hover {
+    border-color: #5470c6;
+}
+
+.xhhaocom-dataStatistics-umami-select:focus {
+    outline: none;
+    border-color: #5470c6;
+    box-shadow: 0 0 0 3px rgba(84, 112, 198, 0.1);
+}
+
+.xhhaocom-dataStatistics-umami-refresh-btn {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #5470c6 0%, #3b82f6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(84, 112, 198, 0.2);
+}
+
+.xhhaocom-dataStatistics-umami-refresh-btn:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 8px rgba(84, 112, 198, 0.3);
+    transform: translateY(-1px);
+}
+
+.xhhaocom-dataStatistics-umami-refresh-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(84, 112, 198, 0.2);
+}
+
+.xhhaocom-dataStatistics-umami-realtime-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+}
+
+.xhhaocom-dataStatistics-umami-realtime-title {
+    font-size: 20px;
+    color: #2c3e50;
+    font-weight: 600;
+    margin: 0;
+}
+
+.xhhaocom-dataStatistics-umami-realtime-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.xhhaocom-dataStatistics-umami-realtime-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+/* ==================== 自动初始化组件样式 ==================== */
+.xhhaocom-dataStatistics-visit,
+.xhhaocom-dataStatistics-tag,
+.xhhaocom-dataStatistics-category,
+.xhhaocom-dataStatistics-article,
+.xhhaocom-dataStatistics-comment,
+.xhhaocom-dataStatistics-popular,
+.xhhaocom-dataStatistics-realtime {
+    width: 100%;
+    min-height: 400px;
+    box-sizing: border-box;
+}
+
+.xhhaocom-dataStatistics-article {
+    min-height: 300px;
+}
+
+/* ==================== 响应式设计 ==================== */
 @media (max-width: 768px) {
     .xhhaocom-dataStatistics-container {
         padding: 15px;
@@ -91,5 +226,37 @@
     .xhhaocom-dataStatistics-calendarChart {
         height: 200px;
     }
-}
 
+    .xhhaocom-dataStatistics-umami-time-selector {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .xhhaocom-dataStatistics-umami-select {
+        width: 100%;
+    }
+
+    .xhhaocom-dataStatistics-umami-refresh-btn {
+        width: 100%;
+    }
+
+    .xhhaocom-dataStatistics-umami-realtime-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .xhhaocom-dataStatistics-visit,
+    .xhhaocom-dataStatistics-tag,
+    .xhhaocom-dataStatistics-category,
+    .xhhaocom-dataStatistics-comment,
+    .xhhaocom-dataStatistics-popular,
+    .xhhaocom-dataStatistics-realtime {
+        min-height: 300px;
+    }
+
+    .xhhaocom-dataStatistics-article {
+        min-height: 250px;
+    }
+}
