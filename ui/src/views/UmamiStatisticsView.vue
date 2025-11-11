@@ -56,8 +56,8 @@ function handleTypeChange(value: string) {
 <template>
   <node-view-wrapper as="div" class="stats-editor">
     <div class="stats-editor__header">
-      <span class="stats-editor__title">统计组件</span>
-      <span class="stats-editor__subtitle">选择要插入的统计模块，发布后前台将自动渲染。</span>
+      <span class="stats-editor__title">Umami 统计组件</span>
+      <span class="stats-editor__subtitle">选择要插入的 Umami 统计模块，发布后前台将自动渲染。</span>
     </div>
 
     <div class="stats-editor__section">
@@ -289,3 +289,4 @@ function handleTypeChange(value: string) {
   font-size: 11px;
 }
 </style>
+

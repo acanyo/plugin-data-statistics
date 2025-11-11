@@ -8,19 +8,17 @@ import java.util.List;
 @Data
 public class PieChartVO {
 
-    // 标签
     private List<Tag> tags = new ArrayList<>();
     @Data
     public static class Tag {
-        private String name;  // 名称
-        private Integer count;  // 数量
+        private String name;
+        private Integer count;
     }
 
-    // 分类
     private List<Category> categories = new ArrayList<>();
     @Data
     public static class Category {
-        private String name;  // 名称
+        private String name;
         private Integer total;  // 总数
     }
 

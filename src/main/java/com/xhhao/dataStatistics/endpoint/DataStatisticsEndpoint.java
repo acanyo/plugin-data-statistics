@@ -104,22 +104,15 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
             });
     }
 
-    /**
-     * 获取访问统计（统一接口）
-     * 查询参数：
-     * - type: 统计类型（daily/weekly/monthly/quarterly/yearly），必填，period 会根据 type 自动设置默认值
-     */
     private Mono<ServerResponse> fetchVisits(ServerRequest request) {
         String typeParam = request.queryParam("type").orElse("daily");
         
-        // 验证 type 参数
         if (!typeParam.matches("daily|weekly|monthly|quarterly|yearly")) {
             return ServerResponse.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("type 参数错误，支持的值: daily, weekly, monthly, quarterly, yearly");
         }
         
-        // websiteId 从配置获取，时间范围根据 type 自动计算
         return umamiService.getVisitStatistics(null, typeParam)
             .flatMap(data -> ServerResponse.ok().bodyValue(data))
             .onErrorResume(e -> {
@@ -129,12 +122,6 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                     .bodyValue("获取" + typeParam + "访问统计失败: " + e.getMessage());
             });
     }
-
-    /**
-     * 获取实时访问统计
-     * 查询参数：
-     * - websiteId: 网站ID（可选，不传则使用第一个网站）
-     */
     private Mono<ServerResponse> fetchRealtimeVisits(ServerRequest request) {
         String websiteIdParam = request.queryParam("websiteId").orElse("");
         String finalWebsiteId = StrUtil.isBlank(websiteIdParam) ? null : websiteIdParam;

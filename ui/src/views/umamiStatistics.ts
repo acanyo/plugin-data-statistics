@@ -1,26 +1,27 @@
 import { isActive, mergeAttributes, Node, ToolboxItem, VueNodeViewRenderer } from "@halo-dev/richtext-editor";
 import { h, markRaw } from "vue";
-import MdiChartBar from "~icons/mdi/chart-bar";
+import MdiChartTimelineVariant from "~icons/mdi/chart-timeline-variant";
 import MdiDeleteForeverOutline from "~icons/mdi/delete-forever-outline";
 import MdiArrowULeftBottom from "~icons/mdi/arrow-u-left-bottom";
-import SiteStatisticsView from "./SiteStatisticsView.vue";
+import UmamiStatisticsView from "./UmamiStatisticsView.vue";
 import { deleteNode } from "../utils/delete-node";
 type Editor = any;
 type EditorState = any;
 
 declare module "@halo-dev/richtext-editor" {
   interface Commands {
-    addSiteStatistics: (attrs?: Partial<SiteStatisticsAttrs>) => any;
-    setSiteStatisticsAttrs: (attrs: Partial<SiteStatisticsAttrs>) => any;
+    addUmamiStatistics: (attrs?: Partial<UmamiStatisticsAttrs>) => any;
+    setUmamiStatisticsAttrs: (attrs: Partial<UmamiStatisticsAttrs>) => any;
   }
 }
 
-export interface SiteStatisticsAttrs {
-  types: string[];
+export interface UmamiStatisticsAttrs {
+  variant: "traffic" | "activity";
+  type?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
 }
 
-const SiteStatistics = Node.create({
-  name: "site-statistics",
+const UmamiStatistics = Node.create({
+  name: "umami-statistics",
   group: "block",
   atom: true,
   selectable: true,
@@ -28,8 +29,11 @@ const SiteStatistics = Node.create({
 
   addAttributes() {
     return {
-      types: {
-        default: ["tags", "categories", "articles", "comments", "topArticles"]
+      variant: {
+        default: "traffic" as UmamiStatisticsAttrs["variant"]
+      },
+      type: {
+        default: "weekly" as UmamiStatisticsAttrs["type"]
       }
     };
   },
@@ -42,10 +46,16 @@ const SiteStatistics = Node.create({
           if (!(element instanceof HTMLElement)) {
             return false;
           }
-          if (element.classList.contains("xhhaocom-chartboard")) {
-            const dataTypes = element.getAttribute("data-types");
-            const types = dataTypes ? dataTypes.split(",").filter(Boolean) : ["tags", "categories", "articles", "comments", "topArticles"];
-            return { types };
+          if (element.classList.contains("xhhaocom-dataStatistics-v2-traffic")) {
+            return {
+              variant: "traffic",
+              type: (element.getAttribute("data-type") as UmamiStatisticsAttrs["type"]) || "weekly"
+            } satisfies Partial<UmamiStatisticsAttrs>;
+          }
+          if (element.classList.contains("xhhaocom-dataStatistics-v2-activity")) {
+            return {
+              variant: "activity"
+            } satisfies Partial<UmamiStatisticsAttrs>;
           }
           return false;
         }
@@ -54,13 +64,19 @@ const SiteStatistics = Node.create({
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
-    const attrs = HTMLAttributes as Partial<SiteStatisticsAttrs> & Record<string, unknown>;
-    const types = (attrs.types as string[]) || ["tags", "categories", "articles", "comments", "topArticles"];
+    const attrs = HTMLAttributes as Partial<UmamiStatisticsAttrs> & Record<string, unknown>;
+    const variant = (attrs.variant as UmamiStatisticsAttrs["variant"]) || "traffic";
+    const type = (attrs.type as UmamiStatisticsAttrs["type"]) || "weekly";
+
+    if (variant === "activity") {
+      return ["div", mergeAttributes({ class: "xhhaocom-dataStatistics-v2-activity" })];
+    }
+
     return [
       "div",
       mergeAttributes({
-        class: "xhhaocom-chartboard",
-        "data-types": types.join(",")
+        class: "xhhaocom-dataStatistics-v2-traffic",
+        "data-type": type
       })
     ];
   },
@@ -68,18 +84,19 @@ const SiteStatistics = Node.create({
   addCommands() {
     return {
       ...(this.parent?.() || {}),
-      addSiteStatistics:
-        (attrs?: Partial<SiteStatisticsAttrs>) =>
+      addUmamiStatistics:
+        (attrs?: Partial<UmamiStatisticsAttrs>) =>
         ({ commands }: { commands: any }) => {
           return commands.insertContent({
             type: this.name,
             attrs: {
-              types: attrs?.types || ["tags", "categories", "articles", "comments", "topArticles"]
+              variant: attrs?.variant || "traffic",
+              type: attrs?.type || "weekly"
             }
           });
         },
-      setSiteStatisticsAttrs:
-        (attrs: Partial<SiteStatisticsAttrs>) =>
+      setUmamiStatisticsAttrs:
+        (attrs: Partial<UmamiStatisticsAttrs>) =>
         ({ commands }: { commands: any }) => {
           return commands.updateAttributes(this.name, attrs);
         }
@@ -87,7 +104,7 @@ const SiteStatistics = Node.create({
   },
 
   addNodeView() {
-    return VueNodeViewRenderer(SiteStatisticsView as any);
+    return VueNodeViewRenderer(UmamiStatisticsView as any);
   },
 
   addOptions() {
@@ -106,24 +123,24 @@ const SiteStatistics = Node.create({
       ...this.parent?.(),
       getToolboxItems({ editor }: { editor: Editor }) {
         return {
-          priority: 122529,
+          priority: 122530,
           component: markRaw(ToolboxItem),
           props: {
             editor,
-            icon: markRaw(MdiChartBar),
-            title: "插入网站统计图表",
-            description: "展示标签、分类、文章、评论等站内统计图表",
+            icon: markRaw(MdiChartTimelineVariant),
+            title: "插入 Umami 统计",
+            description: "流量统计或实时活动展示",
             action: () => {
-              editor.chain().focus().addSiteStatistics().run();
+              editor.chain().focus().addUmamiStatistics().run();
             }
           }
         };
       },
       getBubbleMenu({ editor }: { editor: Editor }) {
         return {
-          pluginKey: "siteStatisticsBubbleMenu",
+          pluginKey: "umamiStatisticsBubbleMenu",
           shouldShow: ({ state }: { state: EditorState }) => {
-            return isActive(state, SiteStatistics.name);
+            return isActive(state, UmamiStatistics.name);
           },
           items: [
             {
@@ -132,7 +149,7 @@ const SiteStatistics = Node.create({
                 icon: DeleteIcon,
                 title: "删除",
                 action: ({ editor }: { editor: Editor }) => {
-                  deleteNode(SiteStatistics.name, editor);
+                  deleteNode(UmamiStatistics.name, editor);
                 }
               }
             },
@@ -170,4 +187,5 @@ const SiteStatistics = Node.create({
   }
 });
 
-export default SiteStatistics;
+export default UmamiStatistics;
+

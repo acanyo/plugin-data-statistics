@@ -1,9 +1,6 @@
 package com.xhhao.dataStatistics.process;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xhhao.dataStatistics.service.SettingConfigGetter;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.pf4j.PluginWrapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PropertyPlaceholderHelper;
@@ -13,8 +10,7 @@ import org.thymeleaf.model.IModelFactory;
 import org.thymeleaf.processor.element.IElementModelStructureHandler;
 import reactor.core.publisher.Mono;
 import run.halo.app.theme.dialect.TemplateHeadProcessor;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
 @Component
 @RequiredArgsConstructor
@@ -41,6 +37,8 @@ public class DataStatisticsProcess implements TemplateHeadProcessor {
         return PROPERTY_PLACEHOLDER_HELPER.replacePlaceholders("""
             <!-- flow-post start -->
             <script defer src="/plugins/data-statistics/assets/static/js/chart.umd.min.js?version=${version}"></script>
+            <link rel="stylesheet" href="/plugins/data-statistics/assets/static/css/siteCharts.css?version=${version}" />
+            <script defer src="/plugins/data-statistics/assets/static/js/siteCharts.js?version=${version}"></script>
             <script defer src="/plugins/data-statistics/assets/static/js/dataStatistics.js?version=${version}"></script>
             <link rel="stylesheet" href="/plugins/data-statistics/assets/static/css/dataStatistics.css?version=${version}" />
             <!-- flow-post end -->

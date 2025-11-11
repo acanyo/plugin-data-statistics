@@ -62,13 +62,6 @@ spec:
                   border: "1px solid #d1e7ff"
                   cursor: "pointer"
               children: "复制群号"
-        - $formkit: text
-          label: 标题
-          name: title
-          id: title
-          key: title
-          value: "数据统计"
-          help: "网页标题"
     - group: umami
       label: umami设置
       formSchema:
