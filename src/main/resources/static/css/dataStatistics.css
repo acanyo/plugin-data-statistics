@@ -1,5 +1,5 @@
-/* ==================== 数据统计 V2 - 紧凑嵌入版 ==================== */
-/* 专为文章和侧边栏嵌入设计，极简风格 */
+
+
 
 .xhhaocom-dataStatistics-v2-wrapper {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
@@ -8,7 +8,142 @@
     box-sizing: border-box;
 }
 
-/* 容器 - 极简设计 */
+:root {
+    --halo-data-statistics-section-surface: #ffffff;
+    --halo-data-statistics-section-border: #dde3f5;
+    --halo-data-statistics-section-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    --halo-data-statistics-title-color: #1b2559;
+    --halo-data-statistics-subtitle-color: #5b647c;
+    --halo-data-statistics-badge-bg: #e8edff;
+    --halo-data-statistics-badge-text: #2563eb;
+    --halo-data-statistics-card-surface: #f6f8ff;
+    --halo-data-statistics-card-border: #dbe1fb;
+    --halo-data-statistics-card-shadow: none;
+    --halo-data-statistics-card-hover-border: #c2cbff;
+    --halo-data-statistics-card-hover-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
+    --halo-data-statistics-card-icon-bg: #e9efff;
+    --halo-data-statistics-card-icon-color: #2563eb;
+    --halo-data-statistics-number-color: #1d4ed8;
+    --halo-data-statistics-label-color: #516079;
+    --halo-data-statistics-success-bg: #e7f7f0;
+    --halo-data-statistics-success-text: #0d9a6b;
+    --halo-data-statistics-activity-surface: #ffffff;
+    --halo-data-statistics-activity-border: #dde3f5;
+    --halo-data-statistics-activity-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    --halo-data-statistics-metric-surface: #f6f8ff;
+    --halo-data-statistics-metric-border: #dbe1fb;
+    --halo-data-statistics-metric-icon-bg: #e9efff;
+    --halo-data-statistics-metric-icon-color: #2563eb;
+    --halo-data-statistics-metric-value-color: #1d4ed8;
+    --halo-data-statistics-metric-label-color: #516079;
+    --halo-data-statistics-list-item-surface: #fdfdff;
+    --halo-data-statistics-list-item-border: #e1e7fb;
+    --halo-data-statistics-list-item-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
+    --halo-data-statistics-list-hover-border: #c2cbff;
+    --halo-data-statistics-list-hover-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
+    --halo-data-statistics-text-primary: #1b2559;
+    --halo-data-statistics-text-secondary: #516079;
+    --halo-data-statistics-text-muted: #5b647c;
+    --halo-data-statistics-time-text: #334155;
+    --halo-data-statistics-scrollbar-thumb: rgba(148, 163, 184, 0.4);
+    --halo-data-statistics-scrollbar-thumb-hover: rgba(148, 163, 184, 0.65);
+    --halo-data-statistics-tooltip-bg: rgba(15, 23, 42, 0.85);
+    --halo-data-statistics-tooltip-text: #f8fafc;
+}
+
+html[data-color-scheme='dark'],
+body[data-color-scheme='dark'],
+[data-color-scheme='dark'] {
+    --halo-data-statistics-section-surface: #111827;
+    --halo-data-statistics-section-border: #1f2937;
+    --halo-data-statistics-section-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);
+    --halo-data-statistics-title-color: #e2e8f0;
+    --halo-data-statistics-subtitle-color: #94a3b8;
+    --halo-data-statistics-badge-bg: rgba(37, 99, 235, 0.2);
+    --halo-data-statistics-badge-text: #93c5fd;
+    --halo-data-statistics-card-surface: #18223a;
+    --halo-data-statistics-card-border: #25304a;
+    --halo-data-statistics-card-shadow: none;
+    --halo-data-statistics-card-hover-border: #3b4d75;
+    --halo-data-statistics-card-hover-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+    --halo-data-statistics-card-icon-bg: #1f2d4a;
+    --halo-data-statistics-card-icon-color: #93c5fd;
+    --halo-data-statistics-number-color: #93c5fd;
+    --halo-data-statistics-label-color: #cbd5f5;
+    --halo-data-statistics-success-bg: rgba(16, 185, 129, 0.15);
+    --halo-data-statistics-success-text: #6ee7b7;
+    --halo-data-statistics-activity-surface: #111827;
+    --halo-data-statistics-activity-border: #1f2937;
+    --halo-data-statistics-activity-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);
+    --halo-data-statistics-metric-surface: #18223a;
+    --halo-data-statistics-metric-border: #25304a;
+    --halo-data-statistics-metric-icon-bg: #1f2d4a;
+    --halo-data-statistics-metric-icon-color: #93c5fd;
+    --halo-data-statistics-metric-value-color: #93c5fd;
+    --halo-data-statistics-metric-label-color: #cbd5f5;
+    --halo-data-statistics-list-item-surface: #162031;
+    --halo-data-statistics-list-item-border: #25304a;
+    --halo-data-statistics-list-item-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+    --halo-data-statistics-list-hover-border: #3b4d75;
+    --halo-data-statistics-list-hover-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+    --halo-data-statistics-text-primary: #e2e8f0;
+    --halo-data-statistics-text-secondary: #cbd5f5;
+    --halo-data-statistics-text-muted: #94a3b8;
+    --halo-data-statistics-time-text: #cbd5f5;
+    --halo-data-statistics-scrollbar-thumb: rgba(148, 163, 184, 0.45);
+    --halo-data-statistics-scrollbar-thumb-hover: rgba(148, 163, 184, 0.65);
+    --halo-data-statistics-tooltip-bg: rgba(241, 245, 249, 0.9);
+    --halo-data-statistics-tooltip-text: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-color-scheme]),
+    :root[data-color-scheme='auto'],
+    :root[data-color-scheme='system'] {
+        --halo-data-statistics-section-surface: #111827;
+        --halo-data-statistics-section-border: #1f2937;
+        --halo-data-statistics-section-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);
+        --halo-data-statistics-title-color: #e2e8f0;
+        --halo-data-statistics-subtitle-color: #94a3b8;
+        --halo-data-statistics-badge-bg: rgba(37, 99, 235, 0.2);
+        --halo-data-statistics-badge-text: #93c5fd;
+        --halo-data-statistics-card-surface: #18223a;
+        --halo-data-statistics-card-border: #25304a;
+        --halo-data-statistics-card-shadow: none;
+        --halo-data-statistics-card-hover-border: #3b4d75;
+        --halo-data-statistics-card-hover-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+        --halo-data-statistics-card-icon-bg: #1f2d4a;
+        --halo-data-statistics-card-icon-color: #93c5fd;
+        --halo-data-statistics-number-color: #93c5fd;
+        --halo-data-statistics-label-color: #cbd5f5;
+        --halo-data-statistics-success-bg: rgba(16, 185, 129, 0.15);
+        --halo-data-statistics-success-text: #6ee7b7;
+        --halo-data-statistics-activity-surface: #111827;
+        --halo-data-statistics-activity-border: #1f2937;
+        --halo-data-statistics-activity-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);
+        --halo-data-statistics-metric-surface: #18223a;
+        --halo-data-statistics-metric-border: #25304a;
+        --halo-data-statistics-metric-icon-bg: #1f2d4a;
+        --halo-data-statistics-metric-icon-color: #93c5fd;
+        --halo-data-statistics-metric-value-color: #93c5fd;
+        --halo-data-statistics-metric-label-color: #cbd5f5;
+        --halo-data-statistics-list-item-surface: #162031;
+        --halo-data-statistics-list-item-border: #25304a;
+        --halo-data-statistics-list-item-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+        --halo-data-statistics-list-hover-border: #3b4d75;
+        --halo-data-statistics-list-hover-shadow: 0 6px 20px rgba(8, 47, 73, 0.45);
+        --halo-data-statistics-text-primary: #e2e8f0;
+        --halo-data-statistics-text-secondary: #cbd5f5;
+        --halo-data-statistics-text-muted: #94a3b8;
+        --halo-data-statistics-time-text: #cbd5f5;
+        --halo-data-statistics-scrollbar-thumb: rgba(148, 163, 184, 0.45);
+        --halo-data-statistics-scrollbar-thumb-hover: rgba(148, 163, 184, 0.65);
+        --halo-data-statistics-tooltip-bg: rgba(241, 245, 249, 0.9);
+        --halo-data-statistics-tooltip-text: #0f172a;
+    }
+}
+
+
 .xhhaocom-dataStatistics-v2-container {
     width: 100%;
     margin: 0;
@@ -18,17 +153,17 @@
     box-shadow: none;
 }
 
-/* 标题 - 紧凑 */
+
 .xhhaocom-dataStatistics-v2-title {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--halo-data-statistics-text-primary);
     margin: 0 0 12px 0;
     padding: 0;
     line-height: 1.4;
 }
 
-/* 图表容器 - 紧凑 */
+
 .xhhaocom-dataStatistics-v2-chart {
     position: relative;
     width: 100%;
@@ -40,115 +175,184 @@
     min-height: 200px;
 }
 
-/* 流量统计组件 - 统一的访问统计和实时访问展示 */
+
 .xhhaocom-dataStatistics-v2-traffic {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
+    display: block;
     margin: 0;
-    padding: 0;
+    padding: 20px 24px;
     width: 100%;
+    background: var(--halo-data-statistics-section-surface);
+    border: 1px solid var(--halo-data-statistics-section-border);
+    border-radius: 16px;
+    box-shadow: var(--halo-data-statistics-section-shadow);
 }
 
-/* 统计卡片 - 优化后的蓝白样式 */
+.xhhaocom-dataStatistics-v2-traffic-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.xhhaocom-dataStatistics-v2-traffic-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.xhhaocom-dataStatistics-v2-traffic-title-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.xhhaocom-dataStatistics-v2-traffic-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--halo-data-statistics-title-color);
+    letter-spacing: 0;
+}
+
+.xhhaocom-dataStatistics-v2-traffic-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--halo-data-statistics-badge-text);
+    border-radius: 6px;
+    background: var(--halo-data-statistics-badge-bg);
+}
+
+.xhhaocom-dataStatistics-v2-traffic-subtitle {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--halo-data-statistics-subtitle-color);
+    letter-spacing: 0.1px;
+}
+
+.xhhaocom-dataStatistics-v2-traffic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 14px;
+}
+
 .xhhaocom-dataStatistics-v2-traffic-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 16px;
+    background: var(--halo-data-statistics-card-surface);
+    border: 1px solid var(--halo-data-statistics-card-border);
+    border-radius: 12px;
+    padding: 18px 16px;
     text-align: center;
     transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    box-shadow: var(--halo-data-statistics-card-shadow);
 }
 
 .xhhaocom-dataStatistics-v2-traffic-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    content: none;
+}
+.xhhaocom-dataStatistics-v2-traffic-card:hover,
+.xhhaocom-dataStatistics-v2-traffic-card:focus-within {
+    border-color: var(--halo-data-statistics-card-hover-border);
+    box-shadow: var(--halo-data-statistics-card-hover-shadow);
+    transform: translateY(-2px);
 }
 
-.xhhaocom-dataStatistics-v2-traffic-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-    transform: translateY(-1px);
-}
 
-.xhhaocom-dataStatistics-v2-traffic-card:hover::before {
-    opacity: 1;
-}
-
-/* 卡片图标 */
 .xhhaocom-dataStatistics-v2-traffic-icon {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    color: #3b82f6;
-    width: 40px;
-    height: 40px;
+    color: var(--halo-data-statistics-card-icon-color);
+    width: 44px;
+    height: 44px;
     margin-left: auto;
     margin-right: auto;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border-radius: 10px;
+    background: var(--halo-data-statistics-card-icon-bg);
+    border-radius: 12px;
 }
 
 .xhhaocom-dataStatistics-v2-traffic-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     display: block;
-    stroke-width: 2.5;
+    stroke-width: 2.3;
 }
 
-/* 统计数值 */
+
 .xhhaocom-dataStatistics-v2-traffic-value {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
-    color: #1e40af;
+    color: var(--halo-data-statistics-number-color);
     line-height: 1.2;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.5px;
 }
 
-/* 统计标签 */
+
 .xhhaocom-dataStatistics-v2-traffic-label {
-    font-size: 12px;
-    color: #64748b;
+    font-size: 13px;
+    color: var(--halo-data-statistics-label-color);
     font-weight: 500;
     letter-spacing: 0.2px;
+    text-transform: none;
 }
 
-/* 实时指示器 */
+
 .xhhaocom-dataStatistics-v2-traffic-realtime {
+    position: absolute;
+    top: 10px;
+    right: 10px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    margin-top: 8px;
-    padding: 4px 8px;
-    background: #ecfdf5;
-    border-radius: 12px;
-    font-size: 10px;
-    color: #059669;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    justify-content: center;
+    cursor: default;
+    z-index: 10;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
 }
 
 .xhhaocom-dataStatistics-v2-traffic-realtime::before {
     content: '';
-    width: 6px;
-    height: 6px;
-    background: #10b981;
+    position: absolute;
+    inset: 0;
     border-radius: 50%;
     animation: xhhaocom-pulse 2s ease-in-out infinite;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+}
+
+.xhhaocom-dataStatistics-v2-traffic-realtime::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -36px;
+    right: -10px;
+    z-index: 1000;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--halo-data-statistics-tooltip-bg);
+    color: var(--halo-data-statistics-tooltip-text);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+}
+
+.xhhaocom-dataStatistics-v2-traffic-realtime:hover::after,
+.xhhaocom-dataStatistics-v2-traffic-realtime:focus-visible::after {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 @keyframes xhhaocom-pulse {
@@ -166,13 +370,13 @@
     }
 }
 
-/* 加载状态 */
+
 .xhhaocom-dataStatistics-v2-traffic-loading {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 120px;
-    color: #9ca3af;
+    color: var(--halo-data-statistics-text-muted);
     font-size: 13px;
     gap: 8px;
 }
@@ -181,13 +385,13 @@
     content: '';
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top-color: #6b7280;
+    border: 2px solid var(--halo-data-statistics-section-border);
+    border-top-color: var(--halo-data-statistics-badge-text);
     border-radius: 50%;
     animation: xhhaocom-v2-spin 0.8s linear infinite;
 }
 
-/* 错误状态 */
+
 .xhhaocom-dataStatistics-v2-traffic-error {
     display: flex;
     align-items: center;
@@ -205,92 +409,195 @@
     font-size: 16px;
 }
 
-/* 近30分钟网站活动组件 */
+
 .xhhaocom-dataStatistics-v2-activity {
     width: 100%;
-    margin: 0;
+    margin: 20px 0 0;
     padding: 0;
-    max-height: 600px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    background: var(--halo-data-statistics-activity-surface);
+    border: 1px solid var(--halo-data-statistics-activity-border);
+    border-radius: 16px;
+    box-shadow: var(--halo-data-statistics-activity-shadow);
 }
 
-/* 滚动条样式 */
-.xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar {
-    width: 6px;
+.xhhaocom-dataStatistics-v2-activity-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 24px 24px;
 }
 
-.xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
+.xhhaocom-dataStatistics-v2-activity-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+.xhhaocom-dataStatistics-v2-activity-title-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+.xhhaocom-dataStatistics-v2-activity-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--halo-data-statistics-title-color);
+    letter-spacing: 0;
+}
+
+.xhhaocom-dataStatistics-v2-activity-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--halo-data-statistics-badge-text);
+    border-radius: 6px;
+    background: var(--halo-data-statistics-badge-bg);
+}
+
+.xhhaocom-dataStatistics-v2-activity-subtitle {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--halo-data-statistics-subtitle-color);
+    letter-spacing: 0.2px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0;
+    border: 1px solid var(--halo-data-statistics-metric-border);
+    border-radius: 12px;
+    background: var(--halo-data-statistics-metric-surface);
+    overflow: visible;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    position: relative;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric + .xhhaocom-dataStatistics-v2-activity-metric {
+    border-left: 1px solid var(--halo-data-statistics-metric-border);
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--halo-data-statistics-metric-icon-bg);
+    color: var(--halo-data-statistics-metric-icon-color);
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--halo-data-statistics-metric-value-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.xhhaocom-dataStatistics-v2-activity-metric-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--halo-data-statistics-metric-label-color);
+    letter-spacing: 0.3px;
 }
 
 .xhhaocom-dataStatistics-v2-activity-list {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-right: 4px;
+    gap: 0;
+    max-height: 408px;
+    overflow-y: auto;
+    padding: 0;
+    overscroll-behavior: contain;
 }
 
+.xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-thumb {
+    background: var(--halo-data-statistics-scrollbar-thumb);
+    border-radius: 999px;
+}
+
+.xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-thumb:hover {
+    background: var(--halo-data-statistics-scrollbar-thumb-hover);
+}
+
+
 .xhhaocom-dataStatistics-v2-activity-item {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    position: relative;
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--halo-data-statistics-list-item-border);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.xhhaocom-dataStatistics-v2-activity-item:last-child {
+    border-bottom: none;
 }
 
 .xhhaocom-dataStatistics-v2-activity-item:hover {
-    border-color: #d1d5db;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: rgba(37, 99, 235, 0.05);
+    transform: translateY(-1px);
 }
 
-/* 头像 */
-.xhhaocom-dataStatistics-v2-activity-avatar {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: #eef2ff;
-}
 
-.xhhaocom-dataStatistics-v2-activity-avatar svg {
-    width: 20px;
-    height: 20px;
-    color: rgba(0, 0, 0, 0.5);
-}
-
-/* 内容区域 */
 .xhhaocom-dataStatistics-v2-activity-content {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
-/* 时间行 */
+
 .xhhaocom-dataStatistics-v2-activity-time-line {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 13px;
+    color: var(--halo-data-statistics-time-text);
     margin-bottom: 4px;
 }
 
@@ -298,47 +605,48 @@
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
+    color: var(--halo-data-statistics-text-primary);
 }
 
 .xhhaocom-dataStatistics-v2-activity-separator {
-    color: #9ca3af;
-    font-size: 11px;
+    color: var(--halo-data-statistics-text-muted);
+    font-size: 12px;
     display: inline-flex;
     align-items: center;
     gap: 4px;
     flex: 1;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .xhhaocom-dataStatistics-v2-activity-separator > span {
-    overflow: hidden;
+    overflow: visible;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
 }
 
 .xhhaocom-dataStatistics-v2-activity-separator svg {
-    color: #9ca3af;
+    color: var(--halo-data-statistics-text-muted);
     display: inline-block;
     vertical-align: middle;
 }
 
-/* 详细信息行 */
+
 .xhhaocom-dataStatistics-v2-activity-detail {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: #6b7280;
-    line-height: 1.5;
+    color: var(--halo-data-statistics-text-secondary);
+    line-height: 1.6;
 }
 
 .xhhaocom-dataStatistics-v2-activity-person {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    color: #6b7280;
+    color: var(--halo-data-statistics-avatar-icon-color);
 }
 
 .xhhaocom-dataStatistics-v2-activity-person svg {
@@ -350,7 +658,7 @@
 
 .xhhaocom-dataStatistics-v2-activity-text {
     flex: 1;
-    color: #6b7280;
+    color: var(--halo-data-statistics-text-secondary);
 }
 
 .xhhaocom-dataStatistics-v2-activity-loading,
@@ -360,7 +668,7 @@
     align-items: center;
     justify-content: center;
     min-height: 120px;
-    color: #64748b;
+    color: var(--halo-data-statistics-text-muted);
     font-size: 13px;
     gap: 8px;
     padding: 12px;
@@ -371,8 +679,8 @@
     content: '';
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top-color: #3b82f6;
+    border: 2px solid var(--halo-data-statistics-activity-border);
+    border-top-color: var(--halo-data-statistics-badge-text);
     border-radius: 50%;
     animation: xhhaocom-v2-spin 0.8s linear infinite;
 }
@@ -386,30 +694,30 @@
     font-size: 16px;
 }
 
-/* 嵌入模式 - 更紧凑 */
+
 .xhhaocom-dataStatistics-v2-chart[data-embed="true"] {
     min-height: 180px;
 }
 
-/* 侧边栏模式 */
+
 .xhhaocom-dataStatistics-v2-chart[data-sidebar="true"] {
     min-height: 220px;
 }
 
-/* Canvas 样式 */
+
 .xhhaocom-dataStatistics-v2-chart canvas {
     max-width: 100% !important;
     height: auto !important;
     display: block;
 }
 
-/* 加载状态 */
+
 .xhhaocom-dataStatistics-v2-loading {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 180px;
-    color: #999;
+    color: var(--halo-data-statistics-text-muted);
     font-size: 13px;
     gap: 8px;
 }
@@ -418,8 +726,8 @@
     content: '';
     width: 16px;
     height: 16px;
-    border: 2px solid #e0e0e0;
-    border-top-color: #666;
+    border: 2px solid var(--halo-data-statistics-section-border);
+    border-top-color: var(--halo-data-statistics-badge-text);
     border-radius: 50%;
     animation: xhhaocom-v2-spin 0.8s linear infinite;
 }
@@ -428,7 +736,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* 错误状态 */
+
 .xhhaocom-dataStatistics-v2-error {
     display: flex;
     align-items: center;
@@ -446,7 +754,7 @@
     font-size: 16px;
 }
 
-/* 统计卡片 - 紧凑网格 */
+
 .xhhaocom-dataStatistics-v2-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -477,7 +785,7 @@
     letter-spacing: 0.5px;
 }
 
-/* 标签列表 - 紧凑 */
+
 .xhhaocom-dataStatistics-v2-tags {
     display: flex;
     flex-wrap: wrap;
@@ -496,81 +804,106 @@
     border: 1px solid #ddd;
 }
 
-/* 响应式 */
+
 @media (max-width: 768px) {
     .xhhaocom-dataStatistics-v2-chart {
         min-height: 160px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-stats {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .xhhaocom-dataStatistics-v2-stat-value {
         font-size: 16px;
     }
+
     
-    /* 移动端流量统计 */
     .xhhaocom-dataStatistics-v2-traffic {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        padding: 16px;
     }
-    
+
+    .xhhaocom-dataStatistics-v2-traffic-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
+    }
+
     .xhhaocom-dataStatistics-v2-traffic-card {
-        padding: 14px 10px;
+        padding: 16px 14px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-traffic-icon {
-        width: 36px;
-        height: 36px;
-        margin-bottom: 8px;
+        width: 44px;
+        height: 44px;
     }
-    
-    .xhhaocom-dataStatistics-v2-traffic-icon svg {
-        width: 18px;
-        height: 18px;
-    }
-    
+
     .xhhaocom-dataStatistics-v2-traffic-value {
-        font-size: 20px;
+        font-size: 22px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-traffic-label {
-        font-size: 11px;
+        font-size: 12px;
     }
+
     
-    /* 移动端活动组件 */
     .xhhaocom-dataStatistics-v2-activity {
-        max-height: 400px;
+        margin-top: 16px;
     }
-    
+
+    .xhhaocom-dataStatistics-v2-activity-section {
+        padding: 18px;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
     .xhhaocom-dataStatistics-v2-activity-item {
-        padding: 10px;
+        padding: 14px;
         gap: 10px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-activity-avatar {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-activity-avatar svg {
         width: 20px;
         height: 20px;
     }
-    
+
     .xhhaocom-dataStatistics-v2-activity-time-line,
     .xhhaocom-dataStatistics-v2-activity-detail {
         font-size: 11px;
     }
-    
-    .xhhaocom-dataStatistics-v2-activity-time-small {
-        font-size: 11px;
+
+    .xhhaocom-dataStatistics-v2-activity-metric-value {
+        font-size: 18px;
     }
 }
 
-/* 深色模式支持 */
+
 @media (prefers-color-scheme: dark) {
+    .xhhaocom-dataStatistics-v2-traffic {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.65) 100%);
+        border-color: rgba(148, 163, 184, 0.15);
+        box-shadow: 0 18px 30px -24px rgba(59, 130, 246, 0.35);
+    }
+
+    .xhhaocom-dataStatistics-v2-traffic-title {
+        color: #bfdbfe;
+    }
+
+    .xhhaocom-dataStatistics-v2-traffic-badge {
+        background: rgba(59, 130, 246, 0.2);
+        color: #bfdbfe;
+    }
+
+    .xhhaocom-dataStatistics-v2-traffic-subtitle {
+        color: #94a3b8;
+    }
+
     .xhhaocom-dataStatistics-v2-title {
         color: #e0e0e0;
     }
@@ -595,30 +928,36 @@
     }
     
     .xhhaocom-dataStatistics-v2-loading {
-        color: #999;
+        color: #6b7280;
     }
     
     .xhhaocom-dataStatistics-v2-error {
         color: #ff6b6b;
     }
     
-    /* 流量统计深色模式 */
-    .xhhaocom-dataStatistics-v2-traffic-card {
-        background: #1e293b;
-        border-color: #334155;
-    }
     
+    .xhhaocom-dataStatistics-v2-traffic-card {
+        background: rgba(17, 24, 39, 0.9);
+        border-color: rgba(59, 130, 246, 0.25);
+        box-shadow: inset 0 1px 0 rgba(59, 130, 246, 0.08), 0 14px 24px -26px rgba(59, 130, 246, 0.6);
+    }
+
+    .xhhaocom-dataStatistics-v2-traffic-icon {
+        background: linear-gradient(140deg, rgba(37, 99, 235, 0.25), rgba(37, 99, 235, 0.08));
+        color: #60a5fa;
+    }
+
     .xhhaocom-dataStatistics-v2-traffic-value {
-        color: #93c5fd;
+        color: #bfdbfe;
     }
     
     .xhhaocom-dataStatistics-v2-traffic-label {
-        color: #94a3b8;
+        color: #cbd5f5;
     }
     
     .xhhaocom-dataStatistics-v2-traffic-realtime {
-        background: #1e3a8a;
-        color: #93c5fd;
+        background: rgba(37, 99, 235, 0.22);
+        color: #bfdbfe;
     }
     
     .xhhaocom-dataStatistics-v2-traffic-realtime::before {
@@ -629,18 +968,61 @@
         color: #6b7280;
     }
     
-    /* 活动组件深色模式 */
+    
+    .xhhaocom-dataStatistics-v2-activity {
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.6) 100%);
+        border-color: rgba(37, 99, 235, 0.18);
+        box-shadow: 0 18px 40px -30px rgba(14, 165, 233, 0.4);
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-title {
+        color: #e0f2fe;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-badge {
+        background: rgba(14, 165, 233, 0.24);
+        color: #bae6fd;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-subtitle {
+        color: #9ca3af;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metrics {
+        gap: 10px;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metric {
+        background: rgba(8, 47, 73, 0.65);
+        border-color: rgba(14, 165, 233, 0.35);
+        box-shadow: inset 0 1px 0 rgba(125, 211, 252, 0.18);
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metric-icon {
+        background: rgba(14, 165, 233, 0.22);
+        color: #7dd3fc;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metric-value {
+        color: #e0f2fe;
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-metric-label {
+        color: #bae6fd;
+    }
+
     .xhhaocom-dataStatistics-v2-activity-item {
-        background: #1f2937;
-        border-color: #374151;
+        background: rgba(15, 23, 42, 0.9);
+        border-color: rgba(14, 165, 233, 0.28);
+        box-shadow: inset 0 1px 0 rgba(125, 211, 252, 0.14);
     }
     
     .xhhaocom-dataStatistics-v2-activity-time-line {
-        color: #9ca3af;
+        color: #e2e8f0;
     }
     
     .xhhaocom-dataStatistics-v2-activity-detail {
-        color: #d1d5db;
+        color: #cbd5f5;
     }
     
     .xhhaocom-dataStatistics-v2-activity-time-small {
@@ -648,11 +1030,16 @@
     }
     
     .xhhaocom-dataStatistics-v2-activity-text {
-        color: #d1d5db;
+        color: #cbd5f5;
     }
     
     .xhhaocom-dataStatistics-v2-activity-avatar svg {
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(125, 211, 252, 0.7);
+    }
+
+    .xhhaocom-dataStatistics-v2-activity-avatar {
+        background: rgba(8, 47, 73, 0.8);
+        border-color: rgba(14, 165, 233, 0.32);
     }
     
     .xhhaocom-dataStatistics-v2-activity-loading,
@@ -660,21 +1047,20 @@
         color: #9ca3af;
     }
     
-    /* 深色模式滚动条 */
-    .xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-track {
-        background: #1f2937;
+    .xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-track {
+        background: transparent;
     }
-    
-    .xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-thumb {
-        background: #4b5563;
+
+    .xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.45);
     }
-    
-    .xhhaocom-dataStatistics-v2-activity::-webkit-scrollbar-thumb:hover {
-        background: #6b7280;
+
+    .xhhaocom-dataStatistics-v2-activity-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.65);
     }
 }
 
-/* 打印样式 */
+
 @media print {
     .xhhaocom-dataStatistics-v2-chart {
         page-break-inside: avoid;
