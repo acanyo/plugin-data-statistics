@@ -333,16 +333,27 @@ body[data-color-scheme='dark'],
     cursor: default;
 }
 
-.xhhaocom-chartboard-heatmap__legend {
+.xhhaocom-chartboard-heatmap__footer {
     grid-column: 2;
     grid-row: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.xhhaocom-chartboard-heatmap__date-range {
+    font-size: 12px;
+    color: var(--chartboard-text-muted);
+}
+
+.xhhaocom-chartboard-heatmap__legend {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
     color: var(--chartboard-text-muted);
     margin-left: auto;
-    margin-top: 4px;
 }
 
 .xhhaocom-chartboard-heatmap__legend-dot {

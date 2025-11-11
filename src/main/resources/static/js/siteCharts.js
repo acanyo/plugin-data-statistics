@@ -542,6 +542,14 @@
         heatmap.appendChild(monthsRow);
         heatmap.appendChild(grid);
 
+        const footerRow = document.createElement('div');
+        footerRow.className = 'xhhaocom-chartboard-heatmap__footer';
+
+        const dateRange = document.createElement('div');
+        dateRange.className = 'xhhaocom-chartboard-heatmap__date-range';
+        dateRange.textContent = `${formatDateYMD(start)} 至 ${formatDateYMD(end)}`;
+        footerRow.appendChild(dateRange);
+
         const legend = document.createElement('div');
         legend.className = 'xhhaocom-chartboard-heatmap__legend';
         const legendLabelMin = document.createElement('span');
@@ -556,14 +564,10 @@
         const legendLabelMax = document.createElement('span');
         legendLabelMax.textContent = '较多';
         legend.appendChild(legendLabelMax);
+        footerRow.appendChild(legend);
 
-        heatmap.appendChild(legend);
+        heatmap.appendChild(footerRow);
         card.appendChild(heatmap);
-
-        const footer = document.createElement('footer');
-        footer.className = 'xhhaocom-chartboard-card__footer';
-        footer.textContent = `${formatDateYMD(start)} 至 ${formatDateYMD(end)}`;
-        card.appendChild(footer);
 
         chartArea.appendChild(card);
 
