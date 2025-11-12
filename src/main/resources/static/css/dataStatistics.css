@@ -43,21 +43,15 @@
     --halo-data-statistics-tooltip-text: #f8fafc;
 }
 
-html.dark,
-html[class~='dark'],
-html[class*='dark'],
-html[data-color-scheme='dark'],
-html[data-theme='dark'],
-html[theme='dark'],
-body.dark,
-body[class~='dark'],
-body[class*='dark'],
-body[data-color-scheme='dark'],
-body[data-theme='dark'],
-body[theme='dark'],
-[data-color-scheme='dark'],
-[data-theme='dark'],
-[theme='dark'] {
+html.dark:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[class~='dark']:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[class*='dark']:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[data-color-scheme='dark']:not([data-color-scheme='light']),
+html[data-theme='dark']:not([data-theme='light']),
+html[theme='dark']:not([theme='light']),
+[data-color-scheme='dark']:not([data-color-scheme='light']),
+[data-theme='dark']:not([data-theme='light']),
+[theme='dark']:not([theme='light']) {
     --halo-data-statistics-section-surface: #111827;
     --halo-data-statistics-section-border: #1f2937;
     --halo-data-statistics-section-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);
@@ -97,7 +91,10 @@ body[theme='dark'],
 @media (prefers-color-scheme: dark) {
     :root:not([data-color-scheme]),
     :root[data-color-scheme='auto'],
-    :root[data-color-scheme='system'] {
+    :root[data-color-scheme='system'],
+    html:not([data-color-scheme]):not(.light):not([class*='light']),
+    html[data-color-scheme='auto']:not(.light):not([class*='light']),
+    html[data-color-scheme='system']:not(.light):not([class*='light']) {
         --halo-data-statistics-section-surface: #111827;
         --halo-data-statistics-section-border: #1f2937;
         --halo-data-statistics-section-shadow: 0 6px 20px rgba(8, 47, 73, 0.35);

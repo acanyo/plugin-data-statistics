@@ -34,21 +34,15 @@
     --chartboard-heatmap-cell: 12px;
 }
 
-html.dark,
-html[class~='dark'],
-html[class*='dark'],
-html[data-color-scheme='dark'],
-html[data-theme='dark'],
-html[theme='dark'],
-body.dark,
-body[class~='dark'],
-body[class*='dark'],
-body[data-color-scheme='dark'],
-body[data-theme='dark'],
-body[theme='dark'],
-[data-color-scheme='dark'],
-[data-theme='dark'],
-[theme='dark'] {
+html.dark:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[class~='dark']:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[class*='dark']:not([data-color-scheme='light']):not(.light):not([class*='light']),
+html[data-color-scheme='dark']:not([data-color-scheme='light']),
+html[data-theme='dark']:not([data-theme='light']),
+html[theme='dark']:not([theme='light']),
+[data-color-scheme='dark']:not([data-color-scheme='light']),
+[data-theme='dark']:not([data-theme='light']),
+[theme='dark']:not([theme='light']) {
     --chartboard-surface: rgba(17, 24, 39, 0.92);
     --chartboard-border: rgba(59, 130, 246, 0.18);
     --chartboard-shadow: 0 20px 40px -28px rgba(30, 64, 175, 0.35);
@@ -85,7 +79,10 @@ body[theme='dark'],
 @media (prefers-color-scheme: dark) {
     :root:not([data-color-scheme]),
     :root[data-color-scheme='auto'],
-    :root[data-color-scheme='system'] {
+    :root[data-color-scheme='system'],
+    html:not([data-color-scheme]):not(.light):not([class*='light']),
+    html[data-color-scheme='auto']:not(.light):not([class*='light']),
+    html[data-color-scheme='system']:not(.light):not([class*='light']) {
         --chartboard-surface: rgba(17, 24, 39, 0.92);
         --chartboard-border: rgba(59, 130, 246, 0.18);
         --chartboard-shadow: 0 20px 40px -28px rgba(30, 64, 175, 0.35);
@@ -510,30 +507,30 @@ body[theme='dark'],
         background: rgba(0, 0, 0, 0.35);
     }
     
-    html.dark .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
-    html[class~='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
-    html[class*='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
-    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
-    html[data-theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
-    html[theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track {
+    html.dark:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
+    html[class~='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
+    html[class*='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
+    html[data-color-scheme='dark']:not([data-color-scheme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
+    html[data-theme='dark']:not([data-theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track,
+    html[theme='dark']:not([theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.05);
     }
 
-    html.dark .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
-    html[class~='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
-    html[class*='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
-    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
-    html[data-theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
-    html[theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb {
+    html.dark:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
+    html[class~='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
+    html[class*='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
+    html[data-color-scheme='dark']:not([data-color-scheme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
+    html[data-theme='dark']:not([data-theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb,
+    html[theme='dark']:not([theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.2);
     }
 
-    html.dark .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
-    html[class~='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
-    html[class*='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
-    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
-    html[data-theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
-    html[theme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover {
+    html.dark:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
+    html[class~='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
+    html[class*='dark']:not([data-color-scheme='light']):not(.light) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
+    html[data-color-scheme='dark']:not([data-color-scheme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
+    html[data-theme='dark']:not([data-theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover,
+    html[theme='dark']:not([theme='light']) .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.3);
     }
 }
