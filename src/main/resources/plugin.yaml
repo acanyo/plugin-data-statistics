@@ -10,15 +10,15 @@ spec:
   requires: ">=2.21.9"
   author:
     name: Handsome
-    website: https://github.com/Handsome
+    website: https://www.xhhao.com
   logo: logo.svg
-  homepage: https://github.com/Handsome/data-statistics#readme
-  repo: https://github.com/Handsome/data-statistics
-  issues: https://github.com/Handsome/data-statistics/issues
+  homepage: https://github.com/acanyo/plugin-data-statistics#readme
+  repo: https://github.com/acanyo/plugin-data-statistics
+  issues: https://github.com/acanyo/plugin-data-statistics/issues
   settingName: plugin-dataStatistics-settings
   configMapName: plugin-dataStatistics-configMap
   displayName: "数据看板"
-  description: "为 Halo2 提供强大的数据可视化统计功能，支持 Umami 流量统计、网站内部数据图表（标签、分类、文章趋势、评论排行、热门文章等），可在编辑器中灵活插入"
+  description: "为 Halo2 提供强大的数据可视化统计功能，支持 Umami 流量统计、uptime、网站内部数据图表（标签、分类、文章趋势、评论排行、热门文章等），可在编辑器中灵活插入"
   license:
     - name: "GPL-3.0"
       url: "https://github.com/Handsome/data-statistics/blob/main/LICENSE"
