@@ -619,8 +619,7 @@
 
         // 在添加到DOM后初始化大小计算
         initSize();
-
-        return [];
+        return [{ type: 'heatmap' }];
     }
 
     const BAR_SOFT_COLORS = [
@@ -907,10 +906,12 @@
             charts.push(...renderTopArticles(container, data.top10Articles));
         }
 
-        if (!charts.length) {
+        const actualCharts = charts.filter(chart => chart && typeof chart.destroy === 'function');
+        if (actualCharts.length > 0) {
+            chartRegistry.set(container, actualCharts);
+        }
+        if (container.children.length === 0) {
             container.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无可展示的数据</div>';
-        } else {
-            chartRegistry.set(container, charts);
         }
     }
 
