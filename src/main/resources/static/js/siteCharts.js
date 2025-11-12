@@ -369,7 +369,6 @@
 
         const monthsRow = document.createElement('div');
         monthsRow.className = 'xhhaocom-chartboard-heatmap__months';
-        monthsRow.style.gridTemplateColumns = `repeat(${weeksCount}, var(--chartboard-heatmap-cell-width))`;
 
         const weekdaysCol = document.createElement('div');
         weekdaysCol.className = 'xhhaocom-chartboard-heatmap__weekdays';
@@ -383,7 +382,54 @@
 
         const grid = document.createElement('div');
         grid.className = 'xhhaocom-chartboard-heatmap__grid';
-        grid.style.gridTemplateColumns = `repeat(${weeksCount}, var(--chartboard-heatmap-cell-width))`;
+        const updateCellSize = () => {
+            const cardRect = card.getBoundingClientRect();
+            if (cardRect.width === 0) {
+                requestAnimationFrame(updateCellSize);
+                return;
+            }
+            
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                const cellSize = '12px';
+                monthsRow.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+                grid.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+                document.documentElement.style.setProperty('--chartboard-heatmap-cell', cellSize);
+                document.documentElement.style.setProperty('--chartboard-heatmap-cell-width', cellSize);
+                return;
+            }
+            const padding = 40; 
+            const weekdayWidth = 30;
+            const weekdayGap = 10;
+            const availableWidth = cardRect.width - padding - weekdayWidth - weekdayGap;
+            const cellGap = 4;
+            const cellWidth = Math.max(8, Math.floor((availableWidth - (weeksCount - 1) * cellGap) / weeksCount));
+            
+            const cellSize = `${cellWidth}px`;
+            monthsRow.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+            grid.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+            document.documentElement.style.setProperty('--chartboard-heatmap-cell', cellSize);
+            document.documentElement.style.setProperty('--chartboard-heatmap-cell-width', cellSize);
+        };
+        const resizeObserver = new ResizeObserver(() => {
+            updateCellSize();
+        });
+        
+        // 监听窗口大小变化（用于设备旋转等情况）
+        let resizeTimeout;
+        const handleWindowResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateCellSize();
+            }, 150);
+        };
+        
+        const initSize = () => {
+            resizeObserver.observe(card);
+            window.addEventListener('resize', handleWindowResize);
+            window.addEventListener('orientationchange', handleWindowResize);
+            updateCellSize();
+        };
 
         const computeLevel = value => {
             if (!value || !maxValue) {
@@ -571,6 +617,9 @@
 
         chartArea.appendChild(card);
 
+        // 在添加到DOM后初始化大小计算
+        initSize();
+
         return [];
     }
 
@@ -639,6 +688,7 @@
         }
 
         const barColors = createBarColors(normalized.length);
+    
 
         const chart = new Chart(canvas, {
             type: 'bar',
@@ -747,6 +797,9 @@
         }
 
         const articleColors = createBarColors(normalized.length);
+        
+        // 检测是否为移动端
+        const isMobile = window.innerWidth <= 768;
 
         const chart = new Chart(canvas, {
             type: 'bar',
@@ -796,6 +849,7 @@
                             drawBorder: false
                         },
                         ticks: {
+                            display: !isMobile, // 移动端隐藏标签
                             font: { size: 12 },
                             autoSkip: false
                         }

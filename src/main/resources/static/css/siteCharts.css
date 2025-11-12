@@ -156,6 +156,36 @@ body[data-color-scheme='dark'],
     overflow: hidden;
 }
 
+.xhhaocom-chartboard-section:has(.xhhaocom-chartboard-card--heatmap) {
+    overflow: hidden;
+}
+
+.xhhaocom-chartboard-section:has(.xhhaocom-chartboard-card--heatmap) .xhhaocom-chartboard-section__body {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+    .xhhaocom-chartboard-section:has(.xhhaocom-chartboard-card--heatmap) {
+        overflow: visible;
+    }
+    
+    .xhhaocom-chartboard-section:has(.xhhaocom-chartboard-card--heatmap) .xhhaocom-chartboard-section__body {
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        padding-bottom: 8px;
+    }
+    
+    .xhhaocom-chartboard-card--heatmap {
+        min-width: 600px;
+    }
+}
+
 .xhhaocom-chartboard-section__header {
     padding: 18px 22px 14px;
     border-bottom: 1px solid var(--chartboard-border);
@@ -230,6 +260,16 @@ body[data-color-scheme='dark'],
     min-height: auto;
     position: relative;
     overflow: visible;
+    width: 100%;
+    min-width: max-content;
+}
+
+@media (max-width: 768px) {
+    .xhhaocom-chartboard-card--heatmap {
+        overflow: visible;
+        min-width: max-content;
+        width: max-content;
+    }
 }
 
 .xhhaocom-chartboard-heatmap {
@@ -272,7 +312,6 @@ body[data-color-scheme='dark'],
 }
 
 .xhhaocom-chartboard-heatmap__month {
-    min-width: calc(var(--chartboard-heatmap-cell-width) * 2);
     text-align: left;
 }
 
@@ -437,6 +476,39 @@ body[data-color-scheme='dark'],
     
     .xhhaocom-chartboard-heatmap__months {
         font-size: 11px;
+    }
+
+    /* 移动端滚动条样式 */
+    .xhhaocom-chartboard-section__body::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .xhhaocom-chartboard-section__body::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        margin: 0 16px;
+    }
+
+    .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 4px;
+    }
+
+    .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.35);
+    }
+    
+    /* 暗色模式滚动条 */
+    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    html[data-color-scheme='dark'] .xhhaocom-chartboard-section__body::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
     }
 }
 
