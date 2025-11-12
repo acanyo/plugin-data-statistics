@@ -80,7 +80,7 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                         .description("成功返回实时访问数据")
                     );
             })
-            .GET("/uptime-kuma/status", this::fetchUptimeKumaStatus, builder -> {
+            .GET("/uptime/status", this::fetchUptimeKumaStatus, builder -> {
                 builder.operationId("fetchUptimeKumaStatus")
                     .description("获取 Uptime Kuma 状态页面数据")
                     .tag(tag)

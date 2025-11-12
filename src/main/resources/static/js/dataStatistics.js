@@ -1,22 +1,22 @@
 (function() {
     'use strict';
-    
+
     function detectEmbedMode(element) {
-        const isInArticle = element.closest('article') || 
-                           element.closest('.post-content') || 
+        const isInArticle = element.closest('article') ||
+                           element.closest('.post-content') ||
                            element.closest('.content') ||
                            element.closest('[class*="content"]');
-        const isInSidebar = element.closest('aside') || 
+        const isInSidebar = element.closest('aside') ||
                            element.closest('.sidebar') ||
                            element.closest('[class*="sidebar"]');
-        
+
         return {
             isEmbed: isInArticle || isInSidebar,
             isArticle: isInArticle,
             isSidebar: isInSidebar
         };
     }
-    
+
     function showLoading(element) {
         if (element.classList.contains('xhhaocom-dataStatistics-v2-traffic')) {
             element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-traffic-loading">加载中</div>';
@@ -26,7 +26,7 @@
             element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-uptime-kuma-loading">加载中</div>';
         }
     }
-    
+
     function formatNumber(num) {
         if (num >= 1000000) {
             return (num / 1000000).toFixed(1) + 'M';
@@ -69,7 +69,7 @@
 
         return result;
     }
-    
+
     const icons = {
         'chart-line': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
         'account-group': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
@@ -80,7 +80,7 @@
     };
 
     const MAX_ACTIVITY_EVENTS = 30;
-    
+
     function createIcon(iconName, size = 24) {
         const svg = icons[iconName];
         if (!svg) return '';
@@ -94,35 +94,35 @@
         quarterly: '近90天趋势',
         yearly: '近一年趋势'
     };
-    
+
     function createStatCard(iconName, value, label, isRealtime = false) {
         const card = document.createElement('div');
         card.className = 'xhhaocom-dataStatistics-v2-traffic-card';
         card.setAttribute('data-variant', isRealtime ? 'realtime' : 'history');
-        
+
         const iconEl = document.createElement('span');
         iconEl.className = 'xhhaocom-dataStatistics-v2-traffic-icon';
         iconEl.innerHTML = createIcon(iconName, 24);
-        
+
         const valueEl = document.createElement('div');
         valueEl.className = 'xhhaocom-dataStatistics-v2-traffic-value';
         valueEl.textContent = formatNumber(value);
-        
+
         const labelEl = document.createElement('div');
         labelEl.className = 'xhhaocom-dataStatistics-v2-traffic-label';
         labelEl.textContent = label;
-        
+
         card.appendChild(iconEl);
         card.appendChild(valueEl);
         card.appendChild(labelEl);
-        
+
         if (isRealtime) {
             const realtimeEl = document.createElement('div');
             realtimeEl.className = 'xhhaocom-dataStatistics-v2-traffic-realtime';
             realtimeEl.dataset.tooltip = '实时数据';
             card.appendChild(realtimeEl);
         }
-        
+
         return card;
     }
 
@@ -153,11 +153,11 @@
 
         return metric;
     }
-    
+
     function initTrafficStats(element, embedMode) {
         element.className = 'xhhaocom-dataStatistics-v2-traffic';
         showLoading(element);
-        
+
         const type = element.getAttribute('data-type') || 'weekly';
         const visitUrl = `/apis/api.data.statistics.xhhao.com/v1alpha1/umami/visits?type=${type}`;
         const realtimeUrl = '/apis/api.data.statistics.xhhao.com/v1alpha1/umami/realtime';
@@ -170,7 +170,7 @@
                 element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-traffic-loading">暂无数据</div>';
                 return;
             }
-            
+
             element.innerHTML = '';
 
             const section = document.createElement('div');
@@ -190,7 +190,7 @@
             const grid = document.createElement('div');
             grid.className = 'xhhaocom-dataStatistics-v2-traffic-grid';
             section.appendChild(grid);
-            
+
             if (visitData) {
                 const pageviews = parseInt(visitData.pageviews) || 0;
                 const visits = parseInt(visitData.visits) || 0;
@@ -200,7 +200,7 @@
                 grid.appendChild(createStatCard('account-group', visits, '访问次数'));
                 grid.appendChild(createStatCard('account', visitors, '访客数'));
             }
-            
+
             if (realtimeData && realtimeData.totals) {
                 const realtimeViews = parseInt(realtimeData.totals.views) || 0;
                 const realtimeVisitors = parseInt(realtimeData.totals.visitors) || 0;
@@ -212,7 +212,7 @@
             }
 
             element.appendChild(section);
-            
+
             if (element.children.length === 0) {
                 element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-traffic-loading">暂无数据</div>';
             }
@@ -221,7 +221,7 @@
             console.error('[Traffic Stats]', err);
             element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-traffic-error">加载失败</div>';
         });
-        
+
         const updateRealtime = () => {
             fetch(realtimeUrl)
                 .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
@@ -246,7 +246,7 @@
         const interval = setInterval(updateRealtime, 30000);
         element.setAttribute('data-cleanup', interval);
     }
-    
+
     function formatTimeChinese(date) {
         const hours = date.getHours();
         const minutes = date.getMinutes();
@@ -255,7 +255,7 @@
         const displayHours = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
         return `${period} ${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
-    
+
     function formatDeviceInfo(event) {
         const osMap = {
             'Mac OS': 'macOS',
@@ -280,15 +280,15 @@
         const country = getCountryName(event.country);
         const os = event.os ? (osMap[event.os] || event.os) : '';
         const device = event.device ? (deviceMap[event.device] || event.device) : '';
-        
+
         let description = '';
-        
+
         if (country) {
             description = `来自 ${country} 的访客`;
         } else {
             description = '一位访客';
         }
-        
+
         if (os && device) {
             description += `在搭载 ${os} 的 ${device} 上`;
         } else if (os) {
@@ -296,22 +296,22 @@
         } else if (device) {
             description += `在 ${device} 上`;
         }
-        
+
         if (browser) {
             description += `使用 ${browser} 浏览器进行访问。`;
         } else {
             description += '进行访问。';
         }
-        
+
         return description;
     }
-    
+
     function initRealtimeActivity(element, embedMode) {
         element.className = 'xhhaocom-dataStatistics-v2-activity';
         showLoading(element);
-        
+
         const realtimeUrl = '/apis/api.data.statistics.xhhao.com/v1alpha1/umami/realtime';
-        
+
         const updateActivity = () => {
             fetch(realtimeUrl)
                 .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
@@ -360,7 +360,7 @@
                     metricsBar.appendChild(createActivityMetric('account', uniqueVisitors, '实时访客'));
                     metricsBar.appendChild(createActivityMetric('eye', activePages.size, '活跃页面数'));
                     listContainer.appendChild(metricsBar);
-                    
+
                     const events = data.events.slice(0, MAX_ACTIVITY_EVENTS);
                     const list = document.createElement('div');
                     list.className = 'xhhaocom-dataStatistics-v2-activity-list';
@@ -371,7 +371,7 @@
                         const time = new Date(event.createdAt);
                         const timeStr = formatTimeChinese(time);
                         const urlPath = event.urlPath || '/';
-                        
+
                         item.innerHTML = `
                             <div class="xhhaocom-dataStatistics-v2-activity-content">
                                 <div class="xhhaocom-dataStatistics-v2-activity-time-line">
@@ -389,7 +389,7 @@
                                 </div>
                             </div>
                         `;
-                        
+
                         list.appendChild(item);
                     });
                     listContainer.appendChild(list);
@@ -406,13 +406,13 @@
         const interval = setInterval(updateActivity, 30000);
         element.setAttribute('data-cleanup', interval);
     }
-    
+
     function initUptimeKumaStatus(element) {
         element.className = 'xhhaocom-dataStatistics-v2-uptime-kuma';
         showLoading(element);
-        
-        const statusUrl = '/apis/api.data.statistics.xhhao.com/v1alpha1/uptime-kuma/status';
-        
+
+        const statusUrl = '/apis/api.data.statistics.xhhao.com/v1alpha1/uptime/status';
+
         const updateStatus = () => {
             fetch(statusUrl)
                 .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
@@ -474,18 +474,18 @@
                     element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-uptime-kuma-error">加载失败</div>';
                 });
         };
-        
+
         updateStatus();
-        const interval = setInterval(updateStatus, 60000); 
+        const interval = setInterval(updateStatus, 60000);
         element.setAttribute('data-cleanup', interval);
     }
-    
+
     function init() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
             return;
         }
-        
+
         const selectors = [
             '.xhhaocom-dataStatistics-v2-traffic',
             '.xhhaocom-dataStatistics-v2-activity',
@@ -496,7 +496,7 @@
             document.querySelectorAll(selector).forEach(element => {
                 const className = element.className;
                 let componentType = '';
-                
+
                 if (className.includes('traffic')) componentType = 'traffic';
                 else if (className.includes('activity')) componentType = 'activity';
                 else if (className.includes('uptime-kuma')) componentType = 'uptime-kuma';
@@ -514,10 +514,10 @@
             });
         });
     }
-    
+
     window.xhhaocomDataStatisticsV2Init = init;
     init();
-    
+
     if (typeof MutationObserver !== 'undefined') {
         const observer = new MutationObserver(() => {
             init();

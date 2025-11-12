@@ -11,5 +11,5 @@ metadata:
     rbac.authorization.halo.run/display-name: "dataStatistics Plugin Public APIs"
 rules:
   - apiGroups: [ "api.data.statistics.xhhao.com" ]
-    resources: ["chart","umami","uptime-kuma"]
+    resources: ["chart","umami","uptime"]
     verbs: [ "get", "list" ]
