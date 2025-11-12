@@ -22,6 +22,8 @@
             element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-traffic-loading">加载中</div>';
         } else if (element.classList.contains('xhhaocom-dataStatistics-v2-activity')) {
             element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-activity-loading">加载中</div>';
+        } else if (element.classList.contains('xhhaocom-dataStatistics-v2-uptime-kuma')) {
+            element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-uptime-kuma-loading">加载中</div>';
         }
     }
     
@@ -405,6 +407,79 @@
         element.setAttribute('data-cleanup', interval);
     }
     
+    function initUptimeKumaStatus(element) {
+        element.className = 'xhhaocom-dataStatistics-v2-uptime-kuma';
+        showLoading(element);
+        
+        const statusUrl = '/apis/api.data.statistics.xhhao.com/v1alpha1/uptime-kuma/status';
+        
+        const updateStatus = () => {
+            fetch(statusUrl)
+                .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+                .then(result => {
+                    element.innerHTML = '';
+
+                    const status = result?.status;
+                    const statusPageUrl = result?.statusPageUrl || '';
+                    const hasLink = Boolean(statusPageUrl);
+
+                    const wrapper = document.createElement(hasLink ? 'a' : 'div');
+                    wrapper.className = 'xhhaocom-dataStatistics-v2-uptime-kuma__content';
+                    wrapper.title = '查看我的项目状态';
+                    wrapper.dataset.tipTitle = '查看我的项目状态';
+                    if (hasLink) {
+                        wrapper.href = statusPageUrl;
+                        wrapper.target = '_blank';
+                        wrapper.rel = 'noopener noreferrer';
+                    } else {
+                        wrapper.classList.add('is-static');
+                    }
+
+                    const statusDot = document.createElement('span');
+                    statusDot.className = 'xhhaocom-dataStatistics-v2-uptime-kuma-dot';
+                    statusDot.title = '查看我的项目状态';
+                    statusDot.dataset.tipTitle = '查看我的项目状态';
+
+                    const statusText = document.createElement('span');
+                    statusText.className = 'xhhaocom-dataStatistics-v2-uptime-kuma-text';
+
+                    let statusClass = 'loading';
+                    let text = '加载中';
+
+                    if (status === 0) {
+                        statusClass = 'error';
+                        text = '全部业务异常';
+                        wrapper.classList.add('xhhaocom-dataStatistics-v2-uptime-kuma__content--error');
+                    } else if (status === 1) {
+                        statusClass = 'success';
+                        text = '所有业务正常';
+                        wrapper.classList.add('xhhaocom-dataStatistics-v2-uptime-kuma__content--success');
+                    } else if (status === 2) {
+                        statusClass = 'warning';
+                        text = '部分业务异常';
+                        wrapper.classList.add('xhhaocom-dataStatistics-v2-uptime-kuma__content--warning');
+                    } else {
+                        wrapper.classList.add('xhhaocom-dataStatistics-v2-uptime-kuma__content--muted');
+                    }
+
+                    statusDot.classList.add(`xhhaocom-dataStatistics-v2-uptime-kuma-dot--${statusClass}`);
+                    statusText.textContent = text;
+
+                    wrapper.appendChild(statusDot);
+                    wrapper.appendChild(statusText);
+                    element.appendChild(wrapper);
+                })
+                .catch(err => {
+                    console.error('[Uptime Kuma Status]', err);
+                    element.innerHTML = '<div class="xhhaocom-dataStatistics-v2-uptime-kuma-error">加载失败</div>';
+                });
+        };
+        
+        updateStatus();
+        const interval = setInterval(updateStatus, 60000); 
+        element.setAttribute('data-cleanup', interval);
+    }
+    
     function init() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
@@ -413,7 +488,8 @@
         
         const selectors = [
             '.xhhaocom-dataStatistics-v2-traffic',
-            '.xhhaocom-dataStatistics-v2-activity'
+            '.xhhaocom-dataStatistics-v2-activity',
+            '.xhhaocom-dataStatistics-v2-uptime-kuma'
         ];
 
         selectors.forEach(selector => {
@@ -423,6 +499,7 @@
                 
                 if (className.includes('traffic')) componentType = 'traffic';
                 else if (className.includes('activity')) componentType = 'activity';
+                else if (className.includes('uptime-kuma')) componentType = 'uptime-kuma';
 
                 if (componentType && !element.hasAttribute('data-initialized')) {
                     element.setAttribute('data-initialized', 'true');
@@ -430,6 +507,8 @@
                         initTrafficStats(element, detectEmbedMode(element));
                     } else if (componentType === 'activity') {
                         initRealtimeActivity(element, detectEmbedMode(element));
+                    } else if (componentType === 'uptime-kuma') {
+                        initUptimeKumaStatus(element);
                     }
                 }
             });

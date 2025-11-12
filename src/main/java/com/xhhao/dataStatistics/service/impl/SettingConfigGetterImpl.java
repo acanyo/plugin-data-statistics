@@ -22,4 +22,10 @@ public class SettingConfigGetterImpl implements SettingConfigGetter {
         return settingFetcher.fetch(UmamiConfig.GROUP, UmamiConfig.class)
             .defaultIfEmpty(new UmamiConfig());
     }
+
+    @Override
+    public Mono<UptimeConfig> getUptimeKumaConfig() {
+        return settingFetcher.fetch(UptimeConfig.GROUP, UptimeConfig.class)
+            .defaultIfEmpty(new UptimeConfig());
+    }
 }

@@ -7,6 +7,7 @@ import static org.springdoc.core.fn.builders.schema.Builder.schemaBuilder;
 import cn.hutool.core.util.StrUtil;
 import com.xhhao.dataStatistics.service.StatisticalService;
 import com.xhhao.dataStatistics.service.UmamiService;
+import com.xhhao.dataStatistics.service.UptimeKumaService;
 import com.xhhao.dataStatistics.vo.PieChartVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
     private final String tag = "api.data.statistics.xhhao.com/v1alpha1/statistics";
     private final StatisticalService statisticalService;
     private final UmamiService umamiService;
+    private final UptimeKumaService uptimeKumaService;
 
     @Override
     public RouterFunction<ServerResponse> endpoint() {
@@ -76,6 +78,15 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                     .response(responseBuilder()
                         .responseCode("200")
                         .description("成功返回实时访问数据")
+                    );
+            })
+            .GET("/uptime-kuma/status", this::fetchUptimeKumaStatus, builder -> {
+                builder.operationId("fetchUptimeKumaStatus")
+                    .description("获取 Uptime Kuma 状态页面数据")
+                    .tag(tag)
+                    .response(responseBuilder()
+                        .responseCode("200")
+                        .description("成功返回状态码：1-所有业务正常，0-全部业务异常，2-部分业务异常")
                     );
             })
             .build();
@@ -133,6 +144,17 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                 return ServerResponse.status(500)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("获取实时访问统计失败: " + e.getMessage());
+            });
+    }
+
+    private Mono<ServerResponse> fetchUptimeKumaStatus(ServerRequest request) {
+        return uptimeKumaService.getStatusPage()
+            .flatMap(data -> ServerResponse.ok().bodyValue(data))
+            .onErrorResume(e -> {
+                log.error("获取 Uptime Kuma 状态页面失败", e);
+                return ServerResponse.status(500)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("获取 Uptime Kuma 状态页面失败: " + e.getMessage());
             });
     }
 

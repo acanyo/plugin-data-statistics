@@ -6,6 +6,7 @@ import reactor.core.publisher.Mono;
 public interface SettingConfigGetter {
     Mono<BasicsConfig> getBasicsConfig();
     Mono<UmamiConfig> getUmamiConfig();
+    Mono<UptimeConfig> getUptimeKumaConfig();
 
     @Data
     class BasicsConfig {
@@ -19,5 +20,10 @@ public interface SettingConfigGetter {
         private String userName;
         private String userPassWord;
         private String websiteId;
+    }
+    @Data
+    class UptimeConfig {
+        public static final String GROUP = "uptime";
+        private String uptimeUrl;
     }
 }
