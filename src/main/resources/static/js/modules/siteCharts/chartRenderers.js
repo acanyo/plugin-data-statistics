@@ -1,0 +1,758 @@
+import { COLOR_PALETTE, DAY_IN_MS, WEEKDAY_LABELS, MONTH_NAMES } from './constants.js';
+import { safeGet, createBarColors } from './utils.js';
+import { createSection, buildCanvasCard } from './domUtils.js';
+
+export function renderTaxonomyCharts(container, tags, categories) {
+    const section = createSection(
+        container,
+        '标签与分类统计',
+        '展示全部标签和分类的文章数量占比'
+    );
+
+    const cards = [];
+
+    const tagData = (tags || [])
+        .map(tag => ({
+            name:
+                tag?.name ??
+                safeGet(tag, 'spec.displayName') ??
+                safeGet(tag, 'metadata.name') ??
+                '未命名标签',
+            count: Number(
+                tag?.count ??
+                tag?.total ??
+                safeGet(tag, 'status.visiblePostCount', 0)
+            )
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+    const categoryData = (categories || [])
+        .map(category => ({
+            name:
+                category?.name ??
+                safeGet(category, 'spec.displayName') ??
+                safeGet(category, 'metadata.name') ??
+                '未命名分类',
+            count: Number(
+                category?.total ??
+                category?.count ??
+                safeGet(category, 'status.visiblePostCount', 0)
+            )
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+    if (!tagData.length && !categoryData.length) {
+        section.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无标签或分类数据</div>';
+        return [];
+    }
+
+    const charts = [];
+
+    if (tagData.length) {
+        const unusedTags = (tags?.length || 0) - tagData.length;
+        const tagFootnote = unusedTags > 0
+            ? `已使用标签 ${tagData.length} 个（另有 ${unusedTags} 个未使用）`
+            : `已使用标签 ${tagData.length} 个`;
+        const canvas = buildCanvasCard(section, tagFootnote);
+        const card = canvas.closest('.xhhaocom-chartboard-card');
+        if (card) {
+            card.classList.add('xhhaocom-chartboard-card--animated');
+        }
+        const chart = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: tagData.map(item => item.name),
+                datasets: [{
+                    data: tagData.map(item => item.count),
+                    backgroundColor: tagData.map((_, index) => COLOR_PALETTE[index % COLOR_PALETTE.length]),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    cutout: '55%',
+                    hoverOffset: 8,
+                    hoverBorderWidth: 3
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1200,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'point'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: context => `${context.label}: ${context.raw} 篇文章`
+                        }
+                    }
+                },
+                onHover: (event, activeElements) => {
+                    canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                }
+            }
+        });
+
+        chart.canvas.style.height = '220px';
+        chart.canvas.style.maxHeight = '220px';
+        chart.resize();
+
+        charts.push(chart);
+        if (card) {
+            cards.push(card);
+        }
+    }
+
+    if (categoryData.length) {
+        const unusedCategories = (categories?.length || 0) - categoryData.length;
+        const categoryFootnote = unusedCategories > 0
+            ? `已使用分类 ${categoryData.length} 个（另有 ${unusedCategories} 个未使用）`
+            : `已使用分类 ${categoryData.length} 个`;
+        const canvas = buildCanvasCard(section, categoryFootnote);
+        const card = canvas.closest('.xhhaocom-chartboard-card');
+        if (card) {
+            card.classList.add('xhhaocom-chartboard-card--animated');
+        }
+        
+        const sortedData = [...categoryData].sort((a, b) => a.count - b.count);
+        
+        const chart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: sortedData.map(item => item.name),
+                datasets: [{
+                    label: '文章数量',
+                    data: sortedData.map(item => item.count),
+                    borderColor: COLOR_PALETTE[0],
+                    backgroundColor: COLOR_PALETTE[0] + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: COLOR_PALETTE[0],
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: COLOR_PALETTE[0],
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    x: {
+                        beginAtZero: false,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            callback: value => Number(value)
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: context => `${context.label}: ${context.raw} 篇文章`
+                        }
+                    }
+                },
+                onHover: (event, activeElements) => {
+                    canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                }
+            }
+        });
+        charts.push(chart);
+        if (card) {
+            cards.push(card);
+        }
+    }
+
+    if (cards.length === 1) {
+        cards[0].style.gridColumn = 'span 2';
+    }
+
+    return charts;
+}
+
+export function renderArticleHeatmap(container, articles) {
+    const chartArea = createSection(
+        container,
+        '文章发布趋势',
+        '按日期统计文章发布数量'
+    );
+
+    const dataMap = new Map();
+    (articles || []).forEach(article => {
+        const rawDate = article.date || article.name;
+        if (!rawDate) {
+            return;
+        }
+        const date = new Date(rawDate);
+        if (Number.isNaN(date.valueOf())) {
+            return;
+        }
+        date.setHours(0, 0, 0, 0);
+        const key = date.toISOString().slice(0, 10);
+        const total = Number(article.total ?? article.count ?? 0);
+        dataMap.set(key, (dataMap.get(key) || 0) + total);
+    });
+
+    if (!dataMap.size) {
+        chartArea.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无文章数据</div>';
+        return [];
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    const start = new Date(end.getTime() - 364 * DAY_IN_MS);
+
+    const firstMonday = new Date(start);
+    const offsetToMonday = (firstMonday.getDay() + 6) % 7;
+    firstMonday.setDate(firstMonday.getDate() - offsetToMonday);
+
+    const totalDays = Math.floor((end - firstMonday) / DAY_IN_MS) + 1;
+    const weeksCount = Math.ceil(totalDays / 7);
+    const weeks = Array.from({ length: weeksCount }, (_, index) =>
+        new Date(firstMonday.getTime() + index * 7 * DAY_IN_MS)
+    );
+
+    const maxValue = Math.max(...dataMap.values(), 0);
+
+    const card = document.createElement('div');
+    card.className = 'xhhaocom-chartboard-card xhhaocom-chartboard-card--heatmap';
+    card.style.gridColumn = '1 / -1';
+
+    const heatmap = document.createElement('div');
+    heatmap.className = 'xhhaocom-chartboard-heatmap';
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'xhhaocom-chartboard-heatmap__tooltip';
+    tooltip.style.display = 'none';
+    card.appendChild(tooltip);
+
+    const monthsRow = document.createElement('div');
+    monthsRow.className = 'xhhaocom-chartboard-heatmap__months';
+
+    const weekdaysCol = document.createElement('div');
+    weekdaysCol.className = 'xhhaocom-chartboard-heatmap__weekdays';
+    WEEKDAY_LABELS.forEach(day => {
+        const label = document.createElement('div');
+        label.className = 'xhhaocom-chartboard-heatmap__weekday';
+        label.textContent = day;
+        weekdaysCol.appendChild(label);
+    });
+
+    const grid = document.createElement('div');
+    grid.className = 'xhhaocom-chartboard-heatmap__grid';
+    const updateCellSize = () => {
+        const cardRect = card.getBoundingClientRect();
+        if (cardRect.width === 0) {
+            requestAnimationFrame(updateCellSize);
+            return;
+        }
+        
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            const cellSize = '12px';
+            monthsRow.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+            grid.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+            document.documentElement.style.setProperty('--chartboard-heatmap-cell', cellSize);
+            document.documentElement.style.setProperty('--chartboard-heatmap-cell-width', cellSize);
+            return;
+        }
+        const padding = 40; 
+        const weekdayWidth = 30;
+        const weekdayGap = 10;
+        const availableWidth = cardRect.width - padding - weekdayWidth - weekdayGap;
+        const cellGap = 4;
+        const cellWidth = Math.max(8, Math.floor((availableWidth - (weeksCount - 1) * cellGap) / weeksCount));
+        
+        const cellSize = `${cellWidth}px`;
+        monthsRow.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+        grid.style.gridTemplateColumns = `repeat(${weeksCount}, ${cellSize})`;
+        document.documentElement.style.setProperty('--chartboard-heatmap-cell', cellSize);
+        document.documentElement.style.setProperty('--chartboard-heatmap-cell-width', cellSize);
+    };
+    const resizeObserver = new ResizeObserver(() => {
+        updateCellSize();
+    });
+    
+    let resizeTimeout;
+    const handleWindowResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateCellSize();
+        }, 150);
+    };
+    
+    const initSize = () => {
+        resizeObserver.observe(card);
+        window.addEventListener('resize', handleWindowResize);
+        window.addEventListener('orientationchange', handleWindowResize);
+        updateCellSize();
+    };
+
+    const computeLevel = value => {
+        if (!value || !maxValue) {
+            return 0;
+        }
+        if (maxValue <= 1) {
+            return value > 0 ? 1 : 0;
+        }
+        const q1 = Math.max(1, Math.ceil(maxValue * 0.25));
+        const q2 = Math.max(q1 + 1, Math.ceil(maxValue * 0.5));
+        const q3 = Math.max(q2 + 1, Math.ceil(maxValue * 0.75));
+        if (value >= q3) return 4;
+        if (value >= q2) return 3;
+        if (value >= q1) return 2;
+        return 1;
+    };
+
+    const showTooltip = (event, dateKey, value) => {
+        tooltip.innerHTML = `<strong>${dateKey}</strong><span>${value ? `发布 ${value} 篇文章` : '无文章发布'}</span>`;
+        tooltip.style.display = 'flex';
+
+        const cardRect = card.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        let left = event.clientX - cardRect.left + 12;
+        let top = event.clientY - cardRect.top - tooltipRect.height - 10;
+
+        if (left + tooltipRect.width > cardRect.width) {
+            left = cardRect.width - tooltipRect.width - 8;
+        }
+        if (top < 0) {
+            top = event.clientY - cardRect.top + 12;
+        }
+
+        tooltip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+    };
+
+    const hideTooltip = () => {
+        tooltip.style.display = 'none';
+        tooltip.style.transform = 'translate(-9999px, -9999px)';
+    };
+
+    let monthSegments = [];
+    {
+        const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+        while (cursor <= lastMonth) {
+            const monthStart = new Date(cursor);
+            const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+
+            const effectiveStart = monthStart < start ? new Date(start) : monthStart;
+            const effectiveEnd = monthEnd > end ? new Date(end) : monthEnd;
+
+            const startOffsetDays = Math.floor((effectiveStart - firstMonday) / DAY_IN_MS);
+            const endOffsetDays = Math.floor((effectiveEnd - firstMonday) / DAY_IN_MS);
+            const startWeek = Math.max(0, Math.min(weeksCount - 1, Math.floor(startOffsetDays / 7)));
+            const endWeekExclusive = Math.max(startWeek + 1, Math.min(weeksCount, Math.floor(endOffsetDays / 7) + 1));
+
+            monthSegments.push({
+                label: MONTH_NAMES[cursor.getMonth()],
+                start: startWeek,
+                end: endWeekExclusive
+            });
+
+            cursor.setMonth(cursor.getMonth() + 1);
+        }
+    }
+
+    if (monthSegments.length) {
+        const normalized = [];
+        let cursorIndex = 0;
+        monthSegments.forEach(segment => {
+            let start = Math.max(cursorIndex, segment.start);
+            let end = Math.max(start + 1, segment.end);
+
+            start = Math.min(start, weeksCount - 1);
+            end = Math.min(end, weeksCount);
+            if (start >= weeksCount) {
+                return;
+            }
+
+            normalized.push({
+                label: segment.label,
+                start,
+                end
+            });
+            cursorIndex = end;
+        });
+        monthSegments = normalized;
+    }
+
+    weeks.forEach((weekStart, weekIndex) => {
+        const column = document.createElement('div');
+        column.className = 'xhhaocom-chartboard-heatmap__column';
+
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+            const day = new Date(weekStart.getTime() + dayIndex * DAY_IN_MS);
+            const cell = document.createElement('div');
+            cell.className = 'xhhaocom-chartboard-heatmap__day';
+
+            const dayKey = day.toISOString().slice(0, 10);
+            const isWithinRange = day >= start && day <= end;
+
+            if (!isWithinRange) {
+                cell.classList.add('is-outside');
+            } else {
+                const value = dataMap.get(dayKey) || 0;
+                const level = computeLevel(value);
+                cell.dataset.level = level.toString();
+                cell.dataset.value = value.toString();
+                cell.dataset.date = dayKey;
+
+                const handleMouseMove = event => showTooltip(event, dayKey, value);
+                cell.addEventListener('mouseenter', handleMouseMove);
+                cell.addEventListener('mousemove', handleMouseMove);
+                cell.addEventListener('mouseleave', hideTooltip);
+            }
+
+            column.appendChild(cell);
+        }
+
+        grid.appendChild(column);
+    });
+
+    card.addEventListener('mouseleave', hideTooltip);
+
+    let cursor = 0;
+    monthSegments.forEach(segment => {
+        if (segment.start > cursor) {
+            const filler = document.createElement('div');
+            filler.className = 'xhhaocom-chartboard-heatmap__month is-placeholder';
+            filler.style.gridColumn = `span ${segment.start - cursor}`;
+            monthsRow.appendChild(filler);
+        }
+
+        const span = Math.max(1, segment.end - segment.start);
+        const label = document.createElement('div');
+        label.className = 'xhhaocom-chartboard-heatmap__month';
+        label.textContent = segment.label;
+        label.style.gridColumn = `span ${span}`;
+        monthsRow.appendChild(label);
+
+        cursor = segment.end;
+    });
+
+    if (cursor < weeksCount) {
+        const filler = document.createElement('div');
+        filler.className = 'xhhaocom-chartboard-heatmap__month is-placeholder';
+        filler.style.gridColumn = `span ${weeksCount - cursor}`;
+        monthsRow.appendChild(filler);
+    }
+
+    heatmap.appendChild(weekdaysCol);
+    heatmap.appendChild(monthsRow);
+    heatmap.appendChild(grid);
+
+    const footerRow = document.createElement('div');
+    footerRow.className = 'xhhaocom-chartboard-heatmap__footer';
+
+    const dateRange = document.createElement('div');
+    dateRange.className = 'xhhaocom-chartboard-heatmap__date-range';
+    dateRange.textContent = `${start.toISOString().slice(0, 10)} 至 ${end.toISOString().slice(0, 10)}`;
+    footerRow.appendChild(dateRange);
+
+    const legend = document.createElement('div');
+    legend.className = 'xhhaocom-chartboard-heatmap__legend';
+    const legendLabelMin = document.createElement('span');
+    legendLabelMin.textContent = '较少';
+    legend.appendChild(legendLabelMin);
+    [0, 1, 2, 3, 4].forEach(level => {
+        const dot = document.createElement('span');
+        dot.className = 'xhhaocom-chartboard-heatmap__legend-dot';
+        dot.dataset.level = level.toString();
+        legend.appendChild(dot);
+    });
+    const legendLabelMax = document.createElement('span');
+    legendLabelMax.textContent = '较多';
+    legend.appendChild(legendLabelMax);
+    footerRow.appendChild(legend);
+
+    heatmap.appendChild(footerRow);
+    card.appendChild(heatmap);
+
+    chartArea.appendChild(card);
+
+    initSize();
+    return [{ type: 'heatmap' }];
+}
+
+export function renderCommentChart(container, comments, softColors, strongColors) {
+    const chartArea = createSection(
+        container,
+        '评论活跃用户',
+        '按评论作者统计评论数量'
+    );
+    if (!comments?.length) {
+        chartArea.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无评论数据</div>';
+        return [];
+    }
+
+    const normalized = comments
+        .map(comment => ({
+            name: comment?.username || comment?.name || comment?.email || '匿名',
+            count: Number(comment?.count ?? 0)
+        }))
+        .filter(item => item.count > 0)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+    if (!normalized.length) {
+        chartArea.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无评论数据</div>';
+        return [];
+    }
+
+    const canvas = buildCanvasCard(chartArea, `活跃评论用户 Top ${normalized.length}`);
+    const card = canvas.closest('.xhhaocom-chartboard-card');
+    if (card) {
+        card.classList.add('xhhaocom-chartboard-card--animated');
+    }
+
+    const barColors = createBarColors(normalized.length, softColors, strongColors);
+    
+
+    const chart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: normalized.map(item => item.name),
+            datasets: [{
+                label: '评论数量',
+                data: normalized.map(item => item.count),
+                backgroundColor: barColors.map(item => item.background),
+                borderColor: barColors.map(item => item.border),
+                borderWidth: 1.5,
+                borderRadius: {
+                    topLeft: 14,
+                    topRight: 14,
+                    bottomLeft: 14,
+                    bottomRight: 14
+                },
+                barPercentage: 0.65,
+                categoryPercentage: 0.6
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1400,
+                easing: 'easeOutQuart'
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.18)',
+                        drawBorder: false,
+                        borderDash: [4, 4]
+                    },
+                    ticks: {
+                        precision: 0,
+                        font: { size: 12 }
+                    }
+                },
+                x: {
+                    grid: {
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: { size: 12 },
+                        autoSkip: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    cornerRadius: 8,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        title: items => items[0]?.label || '',
+                        label: context => `评论 ${context.raw} 次`
+                    }
+                }
+            },
+            onHover: (event, activeElements) => {
+                canvas.style.cursor = activeElements.length ? 'pointer' : 'default';
+            }
+        }
+    });
+
+    return [chart];
+}
+
+export function renderTopArticles(container, articles, softColors, strongColors) {
+    const chartArea = createSection(
+        container,
+        '热门文章 Top10',
+        '按访问量排序的热门文章'
+    );
+    if (!articles?.length) {
+        chartArea.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无热门文章数据</div>';
+        return [];
+    }
+
+    const normalized = articles
+        .map(item => ({
+            name: item.name || '未命名文章',
+            views: Number(item.views ?? item.count ?? 0)
+        }))
+        .filter(item => item.views > 0)
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10);
+
+    if (!normalized.length) {
+        chartArea.innerHTML = '<div class="xhhaocom-chartboard-empty">暂无热门文章数据</div>';
+        return [];
+    }
+
+    const canvas = buildCanvasCard(chartArea, `热门文章 Top ${normalized.length}`);
+    const card = canvas.closest('.xhhaocom-chartboard-card');
+    if (card) {
+        card.classList.add('xhhaocom-chartboard-card--animated');
+    }
+
+    const articleColors = createBarColors(normalized.length, softColors, strongColors);
+    
+    const isMobile = window.innerWidth <= 768;
+
+    const chart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: normalized.map(item => item.name.length > 16 ? item.name.slice(0, 16) + '…' : item.name),
+            datasets: [{
+                label: '访问量',
+                data: normalized.map(item => item.views),
+                backgroundColor: articleColors.map(item => item.background),
+                borderColor: articleColors.map(item => item.border),
+                borderWidth: 1.5,
+                borderRadius: {
+                    topLeft: 14,
+                    topRight: 14,
+                    bottomLeft: 14,
+                    bottomRight: 14
+                },
+                barPercentage: 0.65,
+                categoryPercentage: 0.6
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.18)',
+                        drawBorder: false,
+                        borderDash: [4, 4]
+                    },
+                    ticks: {
+                        callback: value => {
+                            const val = Number(value) || 0;
+                            if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M';
+                            if (val >= 1_000) return (val / 1_000).toFixed(1) + 'K';
+                            return val.toString();
+                        },
+                        font: { size: 12 }
+                    }
+                },
+                x: {
+                    grid: {
+                        drawBorder: false
+                    },
+                    ticks: {
+                        display: !isMobile,
+                        font: { size: 12 },
+                        autoSkip: false
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    cornerRadius: 8,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        title: items => items[0]?.label || '',
+                        label: context => {
+                            const val = Number(context.raw) || 0;
+                            if (val >= 1_000_000) return `访问量 ${(val / 1_000_000).toFixed(1)}M`;
+                            if (val >= 1_000) return `访问量 ${(val / 1_000).toFixed(1)}K`;
+                            return `访问量 ${val}`;
+                        }
+                    }
+                }
+            },
+            onHover: (event, activeElements) => {
+                canvas.style.cursor = activeElements.length ? 'pointer' : 'default';
+            }
+        }
+    });
+
+    return [chart];
+}
