@@ -461,7 +461,25 @@
         const showTooltip = (event, dateKey, value) => {
             const articleTotal = value?.articleTotal ?? 0;
             const momentTotal = value?.momentTotal ?? 0;
-            tooltip.innerHTML = `<strong>${dateKey}</strong><span>文章：${articleTotal}</span>${enableMomentHeatmap ? `<span>瞬间：${momentTotal}</span>` : ''}`;
+            const lines = [`<strong>${dateKey}</strong>`];
+
+            if (enableMomentHeatmap) {
+                if (articleTotal > 0) {
+                    lines.push(`<span>已发布${articleTotal}篇文章</span>`);
+                }
+                if (momentTotal > 0) {
+                    lines.push(`<span>已发布${momentTotal}条瞬间</span>`);
+                }
+                if (articleTotal === 0 && momentTotal === 0) {
+                    lines.push('<span>当日无内容发布</span>');
+                }
+            } else if (articleTotal > 0) {
+                lines.push(`<span>已发布${articleTotal}篇文章</span>`);
+            } else {
+                lines.push('<span>当日无文章发布</span>');
+            }
+
+            tooltip.innerHTML = lines.join('');
             tooltip.style.display = 'flex';
 
             const cardRect = card.getBoundingClientRect();
