@@ -13,6 +13,7 @@ public interface SettingConfigGetter {
     class BasicsConfig {
         public static final String GROUP = "basics";
         private String title;
+        private Boolean enableMomentHeatmap;
     }
     @Data
     class UmamiConfig {

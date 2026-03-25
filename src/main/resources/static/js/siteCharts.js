@@ -313,7 +313,7 @@
         return charts;
     }
 
-    function renderArticleHeatmap(container, articles) {
+    function renderArticleHeatmap(container, articles, enableMomentHeatmap = false) {
         const chartArea = createSection(
             container,
             '文章发布趋势',
@@ -332,8 +332,16 @@
             }
             date.setHours(0, 0, 0, 0);
             const key = formatDateYMD(date);
-            const total = Number(article.total ?? article.count ?? 0);
-            dataMap.set(key, (dataMap.get(key) || 0) + total);
+            const articleTotal = Number(article.articleTotal ?? article.total ?? article.count ?? 0);
+            const momentTotal = Number(article.momentTotal ?? 0);
+            const rawTotal = Number(article.total ?? 0);
+            const total = Number.isFinite(rawTotal) ? rawTotal : (articleTotal + momentTotal);
+            const current = dataMap.get(key) || { total: 0, articleTotal: 0, momentTotal: 0 };
+            dataMap.set(key, {
+                total: current.total + total,
+                articleTotal: current.articleTotal + articleTotal,
+                momentTotal: current.momentTotal + momentTotal
+            });
         });
 
         if (!dataMap.size) {
@@ -356,7 +364,7 @@
             new Date(firstMonday.getTime() + index * 7 * DAY_IN_MS)
         );
 
-        const maxValue = Math.max(...dataMap.values(), 0);
+        const maxValue = Math.max(...[...dataMap.values()].map(v => v.total), 0);
 
         const card = document.createElement('div');
         card.className = 'xhhaocom-chartboard-card xhhaocom-chartboard-card--heatmap';
@@ -451,7 +459,9 @@
         };
 
         const showTooltip = (event, dateKey, value) => {
-            tooltip.innerHTML = `<strong>${dateKey}</strong><span>${value ? `发布 ${value} 篇文章` : '无文章发布'}</span>`;
+            const articleTotal = value?.articleTotal ?? 0;
+            const momentTotal = value?.momentTotal ?? 0;
+            tooltip.innerHTML = `<strong>${dateKey}</strong><span>文章：${articleTotal}</span>${enableMomentHeatmap ? `<span>瞬间：${momentTotal}</span>` : ''}`;
             tooltip.style.display = 'flex';
 
             const cardRect = card.getBoundingClientRect();
@@ -541,10 +551,10 @@
                 if (!isWithinRange) {
                     cell.classList.add('is-outside');
                 } else {
-                    const value = dataMap.get(dayKey) || 0;
-                    const level = computeLevel(value);
+                    const value = dataMap.get(dayKey) || { total: 0, articleTotal: 0, momentTotal: 0 };
+                    const level = computeLevel(value.total);
                     cell.dataset.level = level.toString();
-                    cell.dataset.value = value.toString();
+                    cell.dataset.value = value.total.toString();
                     cell.dataset.date = dayKey;
 
                     const handleMouseMove = event => showTooltip(event, dayKey, value);
@@ -898,7 +908,8 @@
         }
 
         if (enabledTypes.includes('articles')) {
-            charts.push(...renderArticleHeatmap(container, data.articles));
+            charts.push(...renderArticleHeatmap(container, data.articles,
+                Boolean(data.enableMomentHeatmap)));
         }
 
         if (enabledTypes.includes('comments')) {

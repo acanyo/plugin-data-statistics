@@ -62,6 +62,13 @@ spec:
                   border: "1px solid #d1e7ff"
                   cursor: "pointer"
               children: "复制群号"
+        - $formkit: checkbox
+          name: enableMomentHeatmap
+          id: enableMomentHeatmap
+          key: enableMomentHeatmap
+          label: 热力图统计瞬间
+          value: false
+          help: 开启后将瞬间并入热力图统计，悬浮提示增加"瞬间"明细     
     - group: umami
       label: umami设置
       formSchema:
