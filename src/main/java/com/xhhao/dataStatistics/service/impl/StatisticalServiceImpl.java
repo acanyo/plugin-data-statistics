@@ -6,8 +6,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,25 +20,35 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xhhao.dataStatistics.common.Constants;
+import com.xhhao.dataStatistics.service.SettingConfigGetter;
 import com.xhhao.dataStatistics.service.StatisticalService;
 import com.xhhao.dataStatistics.vo.PieChartVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import run.halo.app.core.extension.content.Category;
 import run.halo.app.core.extension.content.Comment;
 import run.halo.app.core.extension.content.Post;
 import run.halo.app.core.extension.content.Tag;
+import run.halo.app.extension.GroupVersionKind;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ReactiveExtensionClient;
+import run.halo.app.extension.Unstructured;
+import run.halo.app.extension.index.query.Queries;
+import run.halo.app.extension.router.selector.FieldSelector;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class StatisticalServiceImpl implements StatisticalService {
-    
+
+    private static final GroupVersionKind MOMENT_GVK =
+        new GroupVersionKind("moment.halo.run", "v1alpha1", "Moment");
+
     private final ReactiveExtensionClient client;
+    private final SettingConfigGetter settingConfigGetter;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -69,6 +81,10 @@ public class StatisticalServiceImpl implements StatisticalService {
     private Mono<PieChartVO> buildPieChartVO() {
         PieChartVO pieChartVO = new PieChartVO();
 
+        Mono<Boolean> enableMomentHeatmapMono = settingConfigGetter.getBasicsConfig()
+            .map(config -> Boolean.TRUE.equals(config.getEnableMomentHeatmap()))
+            .defaultIfEmpty(false);
+
         Mono<List<PieChartVO.Tag>> tagsMono = client.listAll(Tag.class, new ListOptions(),
                 Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
             .map(tag -> {
@@ -89,11 +105,23 @@ public class StatisticalServiceImpl implements StatisticalService {
             })
             .collectList();
 
-        Mono<List<PieChartVO.Article>> articlesMono = client.listAll(Post.class, new ListOptions(),
+        // 文章按日聚合
+        Mono<Map<String, Integer>> postsByDateMono = client.listAll(Post.class, new ListOptions(),
                 Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
             .filter(post -> post.getSpec().getPublishTime() != null)
             .collectList()
-            .map(this::buildArticleList);
+            .map(posts -> posts.stream()
+                .collect(Collectors.groupingBy(post -> {
+                    Instant publishTime = post.getSpec().getPublishTime();
+                    if (publishTime != null) {
+                        return toDateStr(publishTime);
+                    }
+                    return toDateStr(post.getMetadata().getCreationTimestamp());
+                }, Collectors.collectingAndThen(Collectors.counting(), Long::intValue))));
+
+        // 瞬间按日聚合（受开关控制）
+        Mono<Map<String, Integer>> momentsByDateMono = enableMomentHeatmapMono
+            .flatMap(enabled -> enabled ? getMomentCountsByDate() : Mono.just(Map.of()));
 
         Mono<List<PieChartVO.Comment>> commentsMono = client.listAll(Comment.class, new ListOptions(),
                 Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
@@ -108,30 +136,99 @@ public class StatisticalServiceImpl implements StatisticalService {
             .take(10)
             .collectList();
 
-        return Mono.zip(tagsMono, categoriesMono, articlesMono, commentsMono, top10ArticlesMono)
+        return Mono.zip(tagsMono, categoriesMono, postsByDateMono, momentsByDateMono,
+                commentsMono, top10ArticlesMono, enableMomentHeatmapMono)
             .map(tuple -> {
                 pieChartVO.setTags(tuple.getT1());
                 pieChartVO.setCategories(tuple.getT2());
-                pieChartVO.setArticles(tuple.getT3());
-                pieChartVO.setComments(tuple.getT4());
-                pieChartVO.setTop10Articles(tuple.getT5());
+
+                Map<String, Integer> postsByDate = tuple.getT3();
+                Map<String, Integer> momentsByDate = tuple.getT4();
+                boolean enableMoment = tuple.getT7();
+
+                pieChartVO.setArticles(buildArticleList(postsByDate, momentsByDate));
+                pieChartVO.setComments(tuple.getT5());
+                pieChartVO.setTop10Articles(tuple.getT6());
+                pieChartVO.setEnableMomentHeatmap(enableMoment);
                 return pieChartVO;
             });
     }
 
-    private List<PieChartVO.Article> buildArticleList(List<Post> posts) {
-        Map<String, Integer> postsByDate = posts.stream()
-            .collect(Collectors.groupingBy(post -> {
-                Instant publishTime = post.getSpec().getPublishTime();
-                if (publishTime != null) {
-                    return publishTime.atZone(Constants.DEFAULT_ZONE_ID)
-                        .toLocalDate().toString();
-                }
-                return post.getMetadata().getCreationTimestamp()
-                    .atZone(Constants.DEFAULT_ZONE_ID)
-                    .toLocalDate().toString();
-            }, Collectors.collectingAndThen(Collectors.counting(), Long::intValue)));
+    /**
+     * 动态查询 moments 并按日期聚合计数
+     */
+    private Mono<Map<String, Integer>> getMomentCountsByDate() {
+        ListOptions listOptions = new ListOptions();
+        listOptions.setFieldSelector(FieldSelector.of(Queries.and(
+            Queries.equal("spec.visible", "PUBLIC"),
+            Queries.equal("spec.approved", "true")
+        )));
 
+        return Flux.fromIterable(client.indexedQueryEngine().retrieveAll(
+                MOMENT_GVK,
+                listOptions,
+                Sort.by(Sort.Order.desc("spec.releaseTime"))))
+            .flatMap(name -> client.fetch(MOMENT_GVK, name))
+            .filter(this::isPublicApprovedMoment)
+            .collectList()
+            .map(moments -> {
+                Map<String, Integer> map = new HashMap<>();
+                for (Unstructured moment : moments) {
+                    extractMomentDate(moment).ifPresent(dateStr ->
+                        map.merge(dateStr, 1, Integer::sum));
+                }
+                return map;
+            })
+            .onErrorResume(e -> {
+                log.warn("查询瞬间数据失败（可能未安装 moments 插件）: {}", e.getMessage());
+                return Mono.just(Map.of());
+            });
+    }
+
+    /**
+     * 判断瞬间是否为公开已审核状态
+     */
+    private boolean isPublicApprovedMoment(Unstructured unstructured) {
+        try {
+            Map<String, Object> data = unstructured.getData();
+            Map<String, Object> spec = Unstructured.getNestedMap(data, "spec").orElse(null);
+            if (spec == null) return false;
+            Object visible = spec.get("visible");
+            if (visible != null && !"PUBLIC".equals(visible.toString())) return false;
+            Object approved = spec.get("approved");
+            if (approved != null && !Boolean.parseBoolean(approved.toString())) return false;
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 提取瞬间的日期字符串（优先 spec.releaseTime，回退 metadata.creationTimestamp）
+     */
+    private Optional<String> extractMomentDate(Unstructured unstructured) {
+        try {
+            Map<String, Object> data = unstructured.getData();
+            Optional<Instant> releaseTime = Unstructured.getNestedInstant(data, "spec", "releaseTime");
+            if (releaseTime.isPresent()) {
+                return Optional.of(toDateStr(releaseTime.get()));
+            }
+            Instant creation = unstructured.getMetadata().getCreationTimestamp();
+            if (creation != null) {
+                return Optional.of(toDateStr(creation));
+            }
+        } catch (Exception e) {
+            log.debug("提取瞬间日期失败: {}", e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    private String toDateStr(Instant instant) {
+        return instant.atZone(Constants.DEFAULT_ZONE_ID).toLocalDate().toString();
+    }
+
+    private List<PieChartVO.Article> buildArticleList(Map<String, Integer> postsByDate,
+                                                       Map<String, Integer> momentsByDate) {
         LocalDate today = LocalDate.now(Constants.DEFAULT_ZONE_ID);
         LocalDate startDate = today.minusYears(1);
 
@@ -139,10 +236,14 @@ public class StatisticalServiceImpl implements StatisticalService {
             .limit(java.time.temporal.ChronoUnit.DAYS.between(startDate, today.plusDays(1)))
             .map(date -> {
                 String dateStr = date.toString();
+                int articleCount = postsByDate.getOrDefault(dateStr, 0);
+                int momentCount = momentsByDate.getOrDefault(dateStr, 0);
                 PieChartVO.Article articleVO = new PieChartVO.Article();
                 articleVO.setName(dateStr);
                 articleVO.setDate(date.atStartOfDay(Constants.DEFAULT_ZONE_ID).toLocalDateTime());
-                articleVO.setTotal(postsByDate.getOrDefault(dateStr, 0));
+                articleVO.setArticleTotal(articleCount);
+                articleVO.setMomentTotal(momentCount);
+                articleVO.setTotal(articleCount + momentCount);
                 return articleVO;
             })
             .sorted(Comparator.comparing(PieChartVO.Article::getDate).reversed())

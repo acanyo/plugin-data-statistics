@@ -8,6 +8,8 @@ import java.util.List;
 @Data
 public class PieChartVO {
 
+    private Boolean enableMomentHeatmap;
+
     private List<Tag> tags = new ArrayList<>();
     @Data
     public static class Tag {
@@ -29,6 +31,8 @@ public class PieChartVO {
         private String name;  // 名称
         private LocalDateTime date;  // 日期
         private Integer total;  // 总数
+        private Integer articleTotal;  // 文章数
+        private Integer momentTotal;  // 瞬间数
     }
 
     // 评论
