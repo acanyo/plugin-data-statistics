@@ -464,19 +464,19 @@
             const lines = [`<strong>${dateKey}</strong>`];
 
             if (enableMomentHeatmap) {
-                if (articleTotal > 0) {
-                    lines.push(`<span>已发布${articleTotal}篇文章</span>`);
-                }
-                if (momentTotal > 0) {
-                    lines.push(`<span>已发布${momentTotal}条瞬间</span>`);
-                }
-                if (articleTotal === 0 && momentTotal === 0) {
-                    lines.push('<span>当日无内容发布</span>');
+                if (articleTotal > 0 && momentTotal > 0) {
+                    lines.push(`<span>发布了 ${articleTotal} 篇文章和 ${momentTotal} 条瞬间</span>`);
+                } else if (articleTotal > 0) {
+                    lines.push(`<span>发布了 ${articleTotal} 篇文章</span>`);
+                } else if (momentTotal > 0) {
+                    lines.push(`<span>发布了 ${momentTotal} 条瞬间</span>`);
+                } else {
+                    lines.push('<span>当天没有发布内容</span>');
                 }
             } else if (articleTotal > 0) {
-                lines.push(`<span>已发布${articleTotal}篇文章</span>`);
+                lines.push(`<span>发布了 ${articleTotal} 篇文章</span>`);
             } else {
-                lines.push('<span>当日无文章发布</span>');
+                lines.push('<span>当天没有发布文章</span>');
             }
 
             tooltip.innerHTML = lines.join('');
@@ -999,4 +999,3 @@
         observer.observe(document.body, { childList: true, subtree: true });
     }
 })();
-

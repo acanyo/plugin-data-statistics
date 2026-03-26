@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xhhao.dataStatistics.service.SettingConfigGetter;
 import com.xhhao.dataStatistics.service.UptimeKumaService;
 
@@ -26,6 +27,7 @@ public class UptimeKumaServiceImpl implements UptimeKumaService {
 
     private final SettingConfigGetter settingConfigGetter;
     private final WebClient webClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Mono<UptimeStatus> getStatusPage() {
@@ -53,14 +55,22 @@ public class UptimeKumaServiceImpl implements UptimeKumaService {
             .get()
             .uri(apiUrl)
             .retrieve()
-            .bodyToMono(JsonNode.class)
-            .map(this::parseStatusData)
+            .bodyToMono(String.class)
+            .flatMap(this::parseStatusData)
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
                 .maxBackoff(Duration.ofSeconds(5))
                 .filter(throwable -> throwable instanceof WebClientRequestException)
                 .doBeforeRetry(signal -> log.warn("Uptime Kuma API 请求失败，正在重试 ({}/3): {}",
                     signal.totalRetries() + 1, signal.failure().getMessage())))
             .doOnError(error -> log.debug("调用 Uptime Kuma API 失败: {}", error.getMessage()));
+    }
+
+    private Mono<Integer> parseStatusData(String responseBody) {
+        try {
+            return Mono.just(parseStatusData(objectMapper.readTree(responseBody)));
+        } catch (Exception e) {
+            return Mono.error(new IllegalStateException("解析 Uptime Kuma 响应失败: " + e.getMessage(), e));
+        }
     }
 
     private Integer parseStatusData(JsonNode jsonNode) {
@@ -103,4 +113,3 @@ public class UptimeKumaServiceImpl implements UptimeKumaService {
         return StrFormatter.format("{}/api/status-page/heartbeat/{}", baseUrl, slug);
     }
 }
-

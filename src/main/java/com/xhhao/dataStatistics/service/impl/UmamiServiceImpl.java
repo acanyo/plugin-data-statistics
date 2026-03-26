@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xhhao.dataStatistics.common.Constants;
 import com.xhhao.dataStatistics.service.SettingConfigGetter;
 import com.xhhao.dataStatistics.service.UmamiService;
@@ -30,6 +31,7 @@ public class UmamiServiceImpl implements UmamiService {
 
     private final SettingConfigGetter settingConfigGetter;
     private final WebClient.Builder webClientBuilder;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final long TOKEN_CACHE_EXPIRE_MS = Duration.ofHours(Constants.Cache.UMAMI_TOKEN_CACHE_HOURS).toMillis();
     private final TimedCache<String, String> tokenCache = CacheUtil.newTimedCache(TOKEN_CACHE_EXPIRE_MS);
@@ -129,7 +131,8 @@ public class UmamiServiceImpl implements UmamiService {
             client -> client.get()
                 .uri("/api/websites")
                 .retrieve()
-                .bodyToMono(JsonNode.class),
+                .bodyToMono(String.class)
+                .flatMap(body -> parseJsonBody(body, "获取 Umami 网站列表")),
             "获取 Umami 网站列表"
         );
     }
@@ -144,7 +147,8 @@ public class UmamiServiceImpl implements UmamiService {
                         .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
                         .build(id))
                     .retrieve()
-                    .bodyToMono(JsonNode.class),
+                    .bodyToMono(String.class)
+                    .flatMap(body -> parseJsonBody(body, "获取实时数据")),
                 "获取实时数据"
             ));
     }
@@ -192,7 +196,8 @@ public class UmamiServiceImpl implements UmamiService {
                     .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
                     .build(websiteId))
                 .retrieve()
-                .bodyToMono(JsonNode.class),
+                .bodyToMono(String.class)
+                .flatMap(body -> parseJsonBody(body, "获取访问统计")),
             "获取访问统计"
         );
     }
@@ -224,6 +229,13 @@ public class UmamiServiceImpl implements UmamiService {
             .map(config -> normalizeBaseUrl(config.getSiteUrl()))
             .defaultIfEmpty("");
     }
-}
 
+    private Mono<JsonNode> parseJsonBody(String body, String operationName) {
+        try {
+            return Mono.just(objectMapper.readTree(body));
+        } catch (Exception e) {
+            return Mono.error(new IllegalStateException(operationName + "响应解析失败: " + e.getMessage(), e));
+        }
+    }
+}
 
