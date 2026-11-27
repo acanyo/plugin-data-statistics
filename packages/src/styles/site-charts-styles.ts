@@ -650,6 +650,9 @@ export const siteChartsStyles = [
       grid-template-columns: auto 1fr;
       grid-template-rows: auto 1fr auto;
       gap: 6px 8px;
+      /* Reserve room for the hover scale so the rightmost/topmost cells are not
+         clipped and no extra scrollbar is created by the enlarged cell. */
+      padding: 6px;
     }
 
     .heatmap__months {
