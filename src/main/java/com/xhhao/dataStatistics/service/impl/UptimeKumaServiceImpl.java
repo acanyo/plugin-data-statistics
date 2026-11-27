@@ -36,7 +36,7 @@ public class UptimeKumaServiceImpl implements UptimeKumaService {
                 var statusPageUrl = StrUtil.trim(config.getUptimeUrl());
                 if (StrUtil.isBlank(statusPageUrl)) {
                     log.debug("Uptime Kuma 状态页 URL 未配置");
-                    return Mono.error(new IllegalStateException("Uptime Kuma 状态页 URL 未配置，请在插件设置中配置状态页 URL"));
+                    return Mono.just(new UptimeKumaService.UptimeStatus(-1, null));
                 }
 
                 try {

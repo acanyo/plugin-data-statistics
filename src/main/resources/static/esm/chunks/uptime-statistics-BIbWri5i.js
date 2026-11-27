@@ -1,7 +1,7 @@
-import { i as c, a as u, x as i, r as d, t as b } from "./lit-DwgqLyPI.js";
-import { s as v, T as h, o as x, e as f } from "./tokens-Dvt0CGho.js";
-const g = [
-  v,
+import { i as c, a as u, x as i, E as b, r as d, t as v } from "./lit-DwgqLyPI.js";
+import { s as h, T as x, o as f, e as g } from "./tokens-Dvt0CGho.js";
+const m = [
+  h,
   c`
     :host {
       display: inline-flex;
@@ -115,17 +115,17 @@ const g = [
     }
   `
 ];
-var m = Object.defineProperty, w = Object.getOwnPropertyDescriptor, l = (r, t, s, o) => {
-  for (var a = o > 1 ? void 0 : o ? w(t, s) : t, n = r.length - 1, p; n >= 0; n--)
-    (p = r[n]) && (a = (o ? p(t, s, a) : p(a)) || a);
-  return o && a && m(t, s, a), a;
+var w = Object.defineProperty, y = Object.getOwnPropertyDescriptor, l = (s, t, r, o) => {
+  for (var a = o > 1 ? void 0 : o ? y(t, r) : t, n = s.length - 1, p; n >= 0; n--)
+    (p = s[n]) && (a = (o ? p(t, r, a) : p(a)) || a);
+  return o && a && w(t, r, a), a;
 };
 let e = class extends u {
   constructor() {
-    super(), this.loading = !0, this.error = !1, this.statusData = null, new h(this);
+    super(), this.loading = !0, this.error = !1, this.statusData = null, new x(this);
   }
   connectedCallback() {
-    super.connectedCallback(), this.stopVisibility = x(this, () => {
+    super.connectedCallback(), this.stopVisibility = f(this, () => {
       this.loadStatus(), this.pollTimer = setInterval(() => {
         this.loadStatus(!1);
       }, 6e4);
@@ -134,12 +134,12 @@ let e = class extends u {
   disconnectedCallback() {
     super.disconnectedCallback(), this.stopVisibility?.(), this.stopVisibility = void 0, this.pollTimer && (clearInterval(this.pollTimer), this.pollTimer = void 0);
   }
-  async loadStatus(r = !0) {
-    r && (this.loading = !0);
+  async loadStatus(s = !0) {
+    s && (this.loading = !0);
     try {
-      this.statusData = await f(), this.error = !1;
+      this.statusData = await g(), this.error = !1;
     } catch {
-      r && (this.error = !0);
+      s && (this.error = !0);
     } finally {
       this.loading = !1;
     }
@@ -159,15 +159,17 @@ let e = class extends u {
           <span class="label">状态获取失败</span>
         </span>
       `;
+    if (this.statusData.status < 0)
+      return b;
     const t = {
       0: { variant: "error", text: "全部业务异常" },
       1: { variant: "success", text: "所有业务正常" },
       2: { variant: "warning", text: "部分业务异常" }
-    }[this.statusData.status] || { variant: "loading", text: "状态未知" }, s = this.statusData.statusPageUrl || "";
-    return s ? i`
+    }[this.statusData.status] || { variant: "loading", text: "状态未知" }, r = this.statusData.statusPageUrl || "";
+    return r ? i`
         <a
           class="pill pill--${t.variant}"
-          href=${s}
+          href=${r}
           target="_blank"
           rel="noopener noreferrer"
           data-tip="点击查看服务监控详情"
@@ -183,7 +185,7 @@ let e = class extends u {
     `;
   }
 };
-e.styles = g;
+e.styles = m;
 l([
   d()
 ], e.prototype, "loading", 2);
@@ -194,7 +196,7 @@ l([
   d()
 ], e.prototype, "statusData", 2);
 e = l([
-  b("uptime-statistics")
+  v("uptime-statistics")
 ], e);
 export {
   e as UptimeStatistics

@@ -148,7 +148,7 @@ public class DataStatisticsEndpoint implements CustomEndpoint {
                     .tag(tag)
                     .response(responseBuilder()
                         .responseCode("200")
-                        .description("成功返回状态码：1-所有业务正常，0-全部业务异常，2-部分业务异常")
+                        .description("成功返回状态码：1-所有业务正常，0-全部业务异常，2-部分业务异常，-1-未配置状态页 URL")
                     );
             })
             .GET("/github/config", this::fetchGithubConfig, builder -> {
