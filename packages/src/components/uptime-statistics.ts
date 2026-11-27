@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { fetchUptimeStatus } from '../api';
 import { ThemeController } from '../theme-controller';
@@ -71,6 +71,10 @@ export class UptimeStatistics extends LitElement {
           <span class="label">状态获取失败</span>
         </span>
       `;
+    }
+
+    if (this.statusData.status < 0) {
+      return nothing;
     }
 
     const map: Record<number, { variant: string; text: string }> = {

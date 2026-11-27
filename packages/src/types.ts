@@ -53,7 +53,7 @@ export interface ActivityEvent {
 }
 
 export interface UptimeStatus {
-  status: 0 | 1 | 2;
+  status: number;
   statusPageUrl?: string;
 }
 

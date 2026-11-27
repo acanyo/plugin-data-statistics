@@ -192,7 +192,7 @@ const umamiKpis = computed(() => {
 });
 
 const uptimeLabel = computed(() => {
-  if (!uptimeData.value) return null;
+  if (!uptimeData.value || uptimeData.value.status < 0) return null;
   if (uptimeData.value.status === 1) return { cls: "is-ok", text: "所有业务正常" };
   if (uptimeData.value.status === 2) return { cls: "is-warn", text: "部分业务异常" };
   return { cls: "is-err", text: "全部业务异常" };
