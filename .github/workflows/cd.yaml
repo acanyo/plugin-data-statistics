@@ -16,5 +16,4 @@ jobs:
       node-version: 22
       java-version: 21
       app-id: app-rtnbbgfk
-      sync-github-readme: true
 
