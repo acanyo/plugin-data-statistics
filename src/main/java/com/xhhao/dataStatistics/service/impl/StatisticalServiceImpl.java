@@ -5,6 +5,9 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +27,7 @@ import com.xhhao.dataStatistics.service.SettingConfigGetter;
 import com.xhhao.dataStatistics.service.StatisticalService;
 import com.xhhao.dataStatistics.vo.PieChartVO;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
@@ -51,14 +55,10 @@ public class StatisticalServiceImpl implements StatisticalService {
     private final SettingConfigGetter settingConfigGetter;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * 缓存的图表数据
-     */
     private volatile Mono<PieChartVO> cachedChartData;
 
     @Override
     public Mono<PieChartVO> getPieChartVO() {
-        // 使用 Mono.cache() 实现缓存，避免重复计算
         if (cachedChartData == null) {
             cachedChartData = buildPieChartVO()
                 .cache(Duration.ofMinutes(Constants.Cache.CHART_DATA_CACHE_MINUTES));
@@ -71,26 +71,23 @@ public class StatisticalServiceImpl implements StatisticalService {
             });
     }
 
-    /**
-     * 清除缓存（可用于强制刷新）
-     */
+    @Override
     public void clearCache() {
         cachedChartData = null;
+        log.info("已清除站内图表统计缓存");
     }
 
     private Mono<PieChartVO> buildPieChartVO() {
-        PieChartVO pieChartVO = new PieChartVO();
-
-        Mono<Boolean> enableMomentHeatmapMono = settingConfigGetter.getBasicsConfig()
-            .map(config -> Boolean.TRUE.equals(config.getEnableMomentHeatmap()))
-            .defaultIfEmpty(false);
+        Mono<SettingConfigGetter.BasicsConfig> basicsMono = settingConfigGetter.getBasicsConfig()
+            .defaultIfEmpty(new SettingConfigGetter.BasicsConfig());
 
         Mono<List<PieChartVO.Tag>> tagsMono = client.listAll(Tag.class, new ListOptions(),
                 Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
             .map(tag -> {
                 PieChartVO.Tag tagVO = new PieChartVO.Tag();
                 tagVO.setName(tag.getSpec().getDisplayName());
-                tagVO.setCount(defaultIfNull(tag.getStatus().getVisiblePostCount(), 0));
+                tagVO.setCount(defaultIfNull(tag.getStatus() != null ? tag.getStatus().getVisiblePostCount() : 0, 0));
+                tagVO.setPermalink(tag.getStatus() != null ? tag.getStatus().getPermalink() : null);
                 return tagVO;
             })
             .collectList();
@@ -100,63 +97,118 @@ public class StatisticalServiceImpl implements StatisticalService {
             .map(category -> {
                 PieChartVO.Category categoryVO = new PieChartVO.Category();
                 categoryVO.setName(category.getSpec().getDisplayName());
-                categoryVO.setTotal(defaultIfNull(category.getStatus().getVisiblePostCount(), 0));
+                categoryVO.setTotal(defaultIfNull(category.getStatus() != null ? category.getStatus().getVisiblePostCount() : 0, 0));
+                categoryVO.setPermalink(category.getStatus() != null ? category.getStatus().getPermalink() : null);
                 return categoryVO;
             })
             .collectList();
 
-        // 文章按日聚合
-        Mono<Map<String, Integer>> postsByDateMono = client.listAll(Post.class, new ListOptions(),
+        Mono<List<Post>> publishedPostsMono = client.listAll(Post.class, new ListOptions(),
                 Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
-            .filter(post -> post.getSpec().getPublishTime() != null)
-            .collectList()
-            .map(posts -> posts.stream()
-                .collect(Collectors.groupingBy(post -> {
-                    Instant publishTime = post.getSpec().getPublishTime();
-                    if (publishTime != null) {
-                        return toDateStr(publishTime);
-                    }
-                    return toDateStr(post.getMetadata().getCreationTimestamp());
-                }, Collectors.collectingAndThen(Collectors.counting(), Long::intValue))));
-
-        // 瞬间按日聚合（受开关控制）
-        Mono<Map<String, Integer>> momentsByDateMono = enableMomentHeatmapMono
-            .flatMap(enabled -> enabled ? getMomentCountsByDate() : Mono.just(Map.of()));
-
-        Mono<List<PieChartVO.Comment>> commentsMono = client.listAll(Comment.class, new ListOptions(),
-                Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
-            .collectList()
-            .map(this::buildCommentList);
-
-        Mono<List<PieChartVO.Top10Article>> top10ArticlesMono = client.listAll(Post.class, new ListOptions(),
-                Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
-            .filter(post -> post.getSpec().getPublishTime() != null)
-            .map(this::buildTop10Article)
-            .sort(Comparator.comparing(PieChartVO.Top10Article::getViews).reversed())
-            .take(10)
+            .filter(post -> post.getSpec() != null && post.getSpec().getPublishTime() != null)
             .collectList();
 
-        return Mono.zip(tagsMono, categoriesMono, postsByDateMono, momentsByDateMono,
-                commentsMono, top10ArticlesMono, enableMomentHeatmapMono)
-            .map(tuple -> {
-                pieChartVO.setTags(tuple.getT1());
-                pieChartVO.setCategories(tuple.getT2());
+        Mono<Map<String, Integer>> momentsByDateMono = basicsMono
+            .flatMap(cfg -> Boolean.TRUE.equals(cfg.getEnableMomentHeatmap())
+                ? getMomentCountsByDate()
+                : Mono.just(Map.of()));
 
-                Map<String, Integer> postsByDate = tuple.getT3();
-                Map<String, Integer> momentsByDate = tuple.getT4();
-                boolean enableMoment = tuple.getT7();
+        Mono<List<Comment>> allCommentsMono = client.listAll(Comment.class, new ListOptions(),
+                Sort.by(Sort.Order.desc("metadata.creationTimestamp")))
+            .collectList();
+
+        return Mono.zip(basicsMono, tagsMono, categoriesMono, publishedPostsMono, momentsByDateMono, allCommentsMono)
+            .map(tuple -> {
+                SettingConfigGetter.BasicsConfig basics = tuple.getT1();
+                List<PieChartVO.Tag> tags = tuple.getT2();
+                List<PieChartVO.Category> categories = tuple.getT3();
+                List<Post> posts = tuple.getT4();
+                Map<String, Integer> momentsByDate = tuple.getT5();
+                List<Comment> comments = tuple.getT6();
+
+                PieChartVO pieChartVO = new PieChartVO();
+                pieChartVO.setEnableMomentHeatmap(Boolean.TRUE.equals(basics.getEnableMomentHeatmap()));
+                if (StrUtil.isNotBlank(basics.getAccentColor())) {
+                    pieChartVO.setAccentColor(basics.getAccentColor().trim());
+                }
+
+                pieChartVO.setTags(tags);
+                pieChartVO.setCategories(categories);
+
+                // Aggregate posts by date, total views, total upvotes, earliest date, and top10
+                Map<String, Integer> postsByDate = new HashMap<>();
+                long totalViews = 0L;
+                long totalUpvotes = 0L;
+                LocalDate earliestPostDate = null;
+                List<PieChartVO.Top10Article> allPostViews = new ArrayList<>(posts.size());
+
+                for (Post post : posts) {
+                    Instant publishTime = post.getSpec().getPublishTime();
+                    Instant effectiveTime = publishTime != null
+                        ? publishTime
+                        : post.getMetadata().getCreationTimestamp();
+                    if (effectiveTime != null) {
+                        LocalDate localDate = effectiveTime.atZone(Constants.DEFAULT_ZONE_ID).toLocalDate();
+                        postsByDate.merge(localDate.toString(), 1, Integer::sum);
+                        if (earliestPostDate == null || localDate.isBefore(earliestPostDate)) {
+                            earliestPostDate = localDate;
+                        }
+                    }
+
+                    PostMetrics metrics = extractPostMetrics(post);
+                    totalViews += metrics.views;
+                    totalUpvotes += metrics.upvotes;
+
+                    PieChartVO.Top10Article top = new PieChartVO.Top10Article();
+                    top.setName(post.getSpec().getTitle());
+                    top.setViews(metrics.views);
+                    top.setPermalink(post.getStatus() != null ? post.getStatus().getPermalink() : null);
+                    allPostViews.add(top);
+                }
+
+                List<PieChartVO.Top10Article> top10 = allPostViews.stream()
+                    .sorted(Comparator.comparing(PieChartVO.Top10Article::getViews).reversed())
+                    .limit(10)
+                    .collect(Collectors.toList());
 
                 pieChartVO.setArticles(buildArticleList(postsByDate, momentsByDate));
-                pieChartVO.setComments(tuple.getT5());
-                pieChartVO.setTop10Articles(tuple.getT6());
-                pieChartVO.setEnableMomentHeatmap(enableMoment);
+                pieChartVO.setMonthlyTrend(buildMonthlyTrend(postsByDate, momentsByDate));
+                pieChartVO.setComments(buildCommentList(comments));
+                pieChartVO.setTop10Articles(top10);
+
+                // Build Site Summary
+                LocalDate today = LocalDate.now(Constants.DEFAULT_ZONE_ID);
+                LocalDate startDate = resolveStartDate(basics.getSiteStartDate(), earliestPostDate);
+                long runningDays = startDate != null
+                    ? Math.max(1L, ChronoUnit.DAYS.between(startDate, today) + 1)
+                    : 0L;
+
+                PieChartVO.SiteSummary summary = new PieChartVO.SiteSummary();
+                summary.setTotalPosts(posts.size());
+                summary.setTotalViews(totalViews);
+                summary.setTotalUpvotes(totalUpvotes);
+                summary.setTotalComments(comments.size());
+                summary.setTotalTags((int) tags.stream().filter(t -> t.getCount() != null && t.getCount() > 0).count());
+                summary.setTotalCategories((int) categories.stream().filter(c -> c.getTotal() != null && c.getTotal() > 0).count());
+                summary.setRunningDays(runningDays);
+                summary.setSiteStartDate(startDate != null ? startDate.toString() : null);
+                pieChartVO.setSummary(summary);
+
                 return pieChartVO;
             });
     }
 
-    /**
-     * 动态查询 moments 并按日期聚合计数
-     */
+    private LocalDate resolveStartDate(String configuredStartDate, LocalDate earliestPostDate) {
+        if (StrUtil.isNotBlank(configuredStartDate)) {
+            try {
+                return LocalDate.parse(configuredStartDate.trim());
+            } catch (Exception e) {
+                log.debug("解析建站日期失败 ({}), 回退首篇文章日期", configuredStartDate);
+            }
+        }
+        return earliestPostDate;
+    }
+
     private Mono<Map<String, Integer>> getMomentCountsByDate() {
         ListOptions listOptions = new ListOptions();
         listOptions.setFieldSelector(FieldSelector.of(Queries.and(
@@ -185,9 +237,6 @@ public class StatisticalServiceImpl implements StatisticalService {
             });
     }
 
-    /**
-     * 判断瞬间是否为公开已审核状态
-     */
     private boolean isPublicApprovedMoment(Unstructured unstructured) {
         try {
             Map<String, Object> data = unstructured.getData();
@@ -203,9 +252,6 @@ public class StatisticalServiceImpl implements StatisticalService {
         }
     }
 
-    /**
-     * 提取瞬间的日期字符串（优先 spec.releaseTime，回退 metadata.creationTimestamp）
-     */
     private Optional<String> extractMomentDate(Unstructured unstructured) {
         try {
             Map<String, Object> data = unstructured.getData();
@@ -228,12 +274,12 @@ public class StatisticalServiceImpl implements StatisticalService {
     }
 
     private List<PieChartVO.Article> buildArticleList(Map<String, Integer> postsByDate,
-                                                       Map<String, Integer> momentsByDate) {
+                                                      Map<String, Integer> momentsByDate) {
         LocalDate today = LocalDate.now(Constants.DEFAULT_ZONE_ID);
         LocalDate startDate = today.minusYears(1);
 
         return Stream.iterate(startDate, date -> date.plusDays(1))
-            .limit(java.time.temporal.ChronoUnit.DAYS.between(startDate, today.plusDays(1)))
+            .limit(ChronoUnit.DAYS.between(startDate, today.plusDays(1)))
             .map(date -> {
                 String dateStr = date.toString();
                 int articleCount = postsByDate.getOrDefault(dateStr, 0);
@@ -250,9 +296,41 @@ public class StatisticalServiceImpl implements StatisticalService {
             .collect(Collectors.toList());
     }
 
+    private List<PieChartVO.MonthlyTrend> buildMonthlyTrend(Map<String, Integer> postsByDate,
+                                                            Map<String, Integer> momentsByDate) {
+        YearMonth currentMonth = YearMonth.now(Constants.DEFAULT_ZONE_ID);
+        Map<String, Integer> articlesByMonth = new HashMap<>();
+        Map<String, Integer> momentsByMonth = new HashMap<>();
+
+        postsByDate.forEach((dateStr, count) -> {
+            if (dateStr.length() >= 7) {
+                articlesByMonth.merge(dateStr.substring(0, 7), count, Integer::sum);
+            }
+        });
+        momentsByDate.forEach((dateStr, count) -> {
+            if (dateStr.length() >= 7) {
+                momentsByMonth.merge(dateStr.substring(0, 7), count, Integer::sum);
+            }
+        });
+
+        List<PieChartVO.MonthlyTrend> result = new ArrayList<>(12);
+        for (int i = 11; i >= 0; i--) {
+            String ym = currentMonth.minusMonths(i).toString();
+            int a = articlesByMonth.getOrDefault(ym, 0);
+            int m = momentsByMonth.getOrDefault(ym, 0);
+            PieChartVO.MonthlyTrend trend = new PieChartVO.MonthlyTrend();
+            trend.setMonth(ym);
+            trend.setArticleCount(a);
+            trend.setMomentCount(m);
+            trend.setTotal(a + m);
+            result.add(trend);
+        }
+        return result;
+    }
+
     private List<PieChartVO.Comment> buildCommentList(List<Comment> comments) {
         Map<String, List<Comment>> commentsByUser = comments.stream()
-            .filter(comment -> comment.getSpec().getOwner() != null)
+            .filter(comment -> comment.getSpec() != null && comment.getSpec().getOwner() != null)
             .collect(Collectors.groupingBy(comment -> {
                 String name = comment.getSpec().getOwner().getName();
                 return name != null ? name : "unknown";
@@ -272,11 +350,9 @@ public class StatisticalServiceImpl implements StatisticalService {
             .collect(Collectors.toList());
     }
 
-    private PieChartVO.Top10Article buildTop10Article(Post post) {
-        PieChartVO.Top10Article top10Article = new PieChartVO.Top10Article();
-        top10Article.setName(post.getSpec().getTitle());
-        
+    private PostMetrics extractPostMetrics(Post post) {
         int visits = 0;
+        int upvotes = 0;
         Map<String, String> annotations = post.getMetadata().getAnnotations();
         if (annotations != null) {
             String statsJson = annotations.get("content.halo.run/stats");
@@ -284,15 +360,18 @@ public class StatisticalServiceImpl implements StatisticalService {
                 try {
                     JsonNode statsNode = objectMapper.readTree(statsJson);
                     if (statsNode.has("visit")) {
-                        visits = statsNode.get("visit").asInt();
+                        visits = statsNode.get("visit").asInt(0);
+                    }
+                    if (statsNode.has("upvote")) {
+                        upvotes = statsNode.get("upvote").asInt(0);
                     }
                 } catch (JsonProcessingException e) {
                     log.warn("解析文章统计信息失败: {}", e.getMessage());
                 }
             }
         }
-        top10Article.setViews(visits);
-        return top10Article;
+        return new PostMetrics(visits, upvotes);
     }
 
+    private record PostMetrics(int views, int upvotes) {}
 }

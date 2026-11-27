@@ -7,68 +7,118 @@ spec:
     - group: basics
       label: 基本设置
       formSchema:
-        - $el: a
-          attrs:
-            href: "https://docs.lik.cc"
-            class: "py-4 block"
-            target: "_blank"
-            style:
-              color: "#1890ff"
-              fontSize: "0.875em"
-              display: "flex"
-              align-items: "center"
-          children:
-            - $el: span
-              children: "查看 统计 帮助文档"
-            - $el: img
-              attrs:
-                src: "/plugins/data-statistics/assets/static/img/link.svg"
-                width: "14px"
-                height: "14px"
-                style:
-                  margin-left: "4px"
-        - $el: span
-          children: "Halo插件主题交流群"
         - $el: div
           attrs:
             style:
+              padding: "14px 16px"
+              marginBottom: "18px"
+              borderRadius: "10px"
+              border: "1px solid #e4e4e7"
+              backgroundColor: "#fafafa"
               display: "flex"
-              gap: "8px"
-              marginTop: "8px"
+              flexDirection: "column"
+              gap: "10px"
           children:
-            - $el: a
+            - $el: div
               attrs:
-                href: "https://qm.qq.com/q/mPJeUOtG5G"
-                target: "_blank"
                 style:
-                  color: "#1890ff"
-                  fontSize: "0.875em"
-                  padding: "4px 8px"
-                  backgroundColor: "#f0f8ff"
-                  borderRadius: "4px"
-                  textDecoration: "none"
-                  border: "1px solid #d1e7ff"
-              children: "加入群聊 766203360"
-            - $el: button
+                  display: "flex"
+                  alignItems: "center"
+                  justifyContent: "space-between"
+                  flexWrap: "wrap"
+                  gap: "8px"
+              children:
+                - $el: span
+                  attrs:
+                    style:
+                      fontSize: "13px"
+                      fontWeight: "600"
+                      color: "#09090b"
+                  children: "数据统计插件帮助与交流"
+                - $el: a
+                  attrs:
+                    href: "https://docs.lik.cc"
+                    target: "_blank"
+                    rel: "noopener noreferrer"
+                    style:
+                      color: "#2563eb"
+                      fontSize: "12.5px"
+                      fontWeight: "500"
+                      display: "inline-flex"
+                      alignItems: "center"
+                      gap: "4px"
+                      textDecoration: "none"
+                  children:
+                    - $el: span
+                      children: "查看帮助文档"
+                    - $el: img
+                      attrs:
+                        src: "/plugins/data-statistics/assets/static/img/link.svg"
+                        width: "13px"
+                        height: "13px"
+            - $el: div
               attrs:
-                type: "button"
-                onclick: "navigator.clipboard.writeText('766203360').then(() => alert('群号已复制到剪贴板'))"
                 style:
-                  color: "#1890ff"
-                  fontSize: "0.875em"
-                  padding: "4px 8px"
-                  backgroundColor: "#f0f8ff"
-                  borderRadius: "4px"
-                  border: "1px solid #d1e7ff"
-                  cursor: "pointer"
-              children: "复制群号"
+                  display: "flex"
+                  alignItems: "center"
+                  flexWrap: "wrap"
+                  gap: "8px"
+              children:
+                - $el: span
+                  attrs:
+                    style:
+                      fontSize: "12px"
+                      color: "#71717a"
+                  children: "Halo 插件主题交流群："
+                - $el: a
+                  attrs:
+                    href: "https://qm.qq.com/q/mPJeUOtG5G"
+                    target: "_blank"
+                    rel: "noopener noreferrer"
+                    style:
+                      color: "#1d4ed8"
+                      fontSize: "12px"
+                      fontWeight: "500"
+                      padding: "4px 10px"
+                      backgroundColor: "rgba(37, 99, 235, 0.08)"
+                      borderRadius: "6px"
+                      textDecoration: "none"
+                      border: "1px solid rgba(37, 99, 235, 0.2)"
+                  children: "加入群聊 766203360"
+                - $el: button
+                  attrs:
+                    type: "button"
+                    onclick: "navigator.clipboard.writeText('766203360').then(() => alert('群号已复制到剪贴板'))"
+                    style:
+                      color: "#3f3f46"
+                      fontSize: "12px"
+                      fontWeight: "500"
+                      padding: "4px 10px"
+                      backgroundColor: "#ffffff"
+                      borderRadius: "6px"
+                      border: "1px solid #d4d4d8"
+                      cursor: "pointer"
+                  children: "复制群号"
         - $formkit: checkbox
           name: enableMomentHeatmap
           id: enableMomentHeatmap
           key: enableMomentHeatmap
           label: 热力图统计瞬间
           value: false
-          help: 开启后将瞬间并入热力图统计，悬浮提示增加"瞬间"明细     
+          help: 开启后将瞬间并入热力图统计，悬浮提示增加"瞬间"明细
+        - $formkit: color
+          name: accentColor
+          id: accentColor
+          key: accentColor
+          label: 主题强调色
+          value: "#2563eb"
+          help: 自定义前台统计组件的主强调色（留空或默认 #2563eb，暗色模式下自动适配对比度）
+        - $formkit: date
+          name: siteStartDate
+          id: siteStartDate
+          key: siteStartDate
+          label: 建站日期
+          help: 可选，用于计算站点已运行天数；留空将自动使用首篇文章的发布日期
     - group: umami
       label: umami设置
       formSchema:

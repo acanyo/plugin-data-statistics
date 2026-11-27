@@ -8,6 +8,7 @@ public interface UmamiService {
     Mono<JsonNode> getWebsites();
     Mono<JsonNode> getRealtimeData(String websiteId);
     Mono<JsonNode> getVisitStatistics(String websiteId, String type);
+    Mono<JsonNode> getPageviewsTrend(String websiteId, String type);
+    Mono<JsonNode> getMetrics(String websiteId, String type, String metricType, int limit);
     Mono<JsonNode> getRealtimeVisitStatistics(String websiteId);
 }
-

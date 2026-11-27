@@ -38,9 +38,6 @@ public class UmamiServiceImpl implements UmamiService {
 
     private static final String CACHE_KEY_PREFIX = "umami_token_";
 
-    /**
-     * 通用重试策略
-     */
     private <T> Mono<T> withRetry(Mono<T> mono, String operationName) {
         return mono.retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
             .maxBackoff(Duration.ofSeconds(5))
@@ -49,9 +46,6 @@ public class UmamiServiceImpl implements UmamiService {
                 operationName, signal.totalRetries() + 1, signal.failure().getMessage())));
     }
 
-    /**
-     * 通用 API 请求方法
-     */
     private <T> Mono<T> executeApiRequest(
             Function<WebClient, Mono<T>> requestBuilder,
             String operationName) {
@@ -74,7 +68,7 @@ public class UmamiServiceImpl implements UmamiService {
     public Mono<String> getToken() {
         return settingConfigGetter.getUmamiConfig()
             .flatMap(config -> {
-                if (StrUtil.isBlank(config.getSiteUrl()) || StrUtil.isBlank(config.getUserName()) 
+                if (StrUtil.isBlank(config.getSiteUrl()) || StrUtil.isBlank(config.getUserName())
                     || StrUtil.isBlank(config.getUserPassWord())) {
                     return Mono.error(new IllegalStateException("Umami 配置不完整"));
                 }
@@ -99,7 +93,7 @@ public class UmamiServiceImpl implements UmamiService {
         if (baseUrl.isEmpty()) {
             return Mono.error(new IllegalStateException("Umami 站点地址为空"));
         }
-        
+
         WebClient client = webClientBuilder.baseUrl(baseUrl).build();
         LoginRequest request = new LoginRequest(config.getUserName(), config.getUserPassWord());
 
@@ -115,7 +109,6 @@ public class UmamiServiceImpl implements UmamiService {
          .onErrorResume(ex -> Mono.error(new IllegalStateException("请求 Umami token 失败: " + ex.getMessage(), ex)));
     }
 
-
     private String normalizeBaseUrl(String siteUrl) {
         return StrUtil.isBlank(siteUrl) ? "" : StrUtil.removeSuffix(siteUrl.trim(), "/");
     }
@@ -123,7 +116,47 @@ public class UmamiServiceImpl implements UmamiService {
     private record LoginRequest(String username, String password) {}
     private record LoginResponse(String token, User user) {}
     private record User(String id, String username, String role, String createdAt, boolean isAdmin) {}
+    private record TimeRange(long startAt, long endAt, String statsUnit, String seriesUnit) {}
 
+    private TimeRange resolveTimeRange(String type) {
+        LocalDateTime now = LocalDateTime.now(Constants.DEFAULT_ZONE_ID);
+        LocalDateTime start;
+        String statsUnit;
+        String seriesUnit;
+
+        switch (type.toLowerCase()) {
+            case "daily" -> {
+                start = now.minusDays(1);
+                statsUnit = "day";
+                seriesUnit = "hour";
+            }
+            case "weekly" -> {
+                start = now.minusDays(7);
+                statsUnit = "day";
+                seriesUnit = "day";
+            }
+            case "monthly" -> {
+                start = now.minusDays(30);
+                statsUnit = "day";
+                seriesUnit = "day";
+            }
+            case "quarterly" -> {
+                start = now.minusDays(90);
+                statsUnit = "month";
+                seriesUnit = "day";
+            }
+            case "yearly" -> {
+                start = now.minusDays(365);
+                statsUnit = "month";
+                seriesUnit = "month";
+            }
+            default -> throw new IllegalArgumentException("不支持的统计类型: " + type);
+        }
+
+        long startAt = start.atZone(Constants.DEFAULT_ZONE_ID).toInstant().toEpochMilli();
+        long endAt = now.atZone(Constants.DEFAULT_ZONE_ID).toInstant().toEpochMilli();
+        return new TimeRange(startAt, endAt, statsUnit, seriesUnit);
+    }
 
     @Override
     public Mono<JsonNode> getWebsites() {
@@ -157,51 +190,74 @@ public class UmamiServiceImpl implements UmamiService {
     public Mono<JsonNode> getVisitStatistics(String websiteId, String type) {
         return resolveWebsiteId(websiteId)
             .flatMap(id -> {
-                LocalDateTime now = LocalDateTime.now(Constants.DEFAULT_ZONE_ID);
-                var timeRange = switch (type.toLowerCase()) {
-                    case "daily" -> new TimeRange(now.minusDays(1), "day");
-                    case "weekly" -> new TimeRange(now.minusDays(7), "day");
-                    case "monthly" -> new TimeRange(now.minusDays(30), "day");
-                    case "quarterly" -> new TimeRange(now.minusDays(90), "month");
-                    case "yearly" -> new TimeRange(now.minusDays(365), "month");
-                    default -> null;
-                };
-                
-                if (timeRange == null) {
-                    return Mono.error(new IllegalArgumentException("不支持的统计类型: " + type));
-                }
-
-                long startAt = timeRange.start.atZone(Constants.DEFAULT_ZONE_ID).toInstant().toEpochMilli();
-                long endAt = now.atZone(Constants.DEFAULT_ZONE_ID).toInstant().toEpochMilli();
-                
-                return fetchVisitStatistics(id, startAt, endAt, timeRange.unit);
+                TimeRange range = resolveTimeRange(type);
+                return executeApiRequest(
+                    client -> client.get()
+                        .uri(uriBuilder -> uriBuilder
+                            .path("/api/websites/{websiteId}/stats")
+                            .queryParam("startAt", range.startAt)
+                            .queryParam("endAt", range.endAt)
+                            .queryParam("unit", range.statsUnit)
+                            .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
+                            .build(id))
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .flatMap(body -> parseJsonBody(body, "获取访问统计")),
+                    "获取访问统计"
+                );
             });
     }
-    
-    private record TimeRange(LocalDateTime start, String unit) {}
+
+    @Override
+    public Mono<JsonNode> getPageviewsTrend(String websiteId, String type) {
+        return resolveWebsiteId(websiteId)
+            .flatMap(id -> {
+                TimeRange range = resolveTimeRange(type);
+                return executeApiRequest(
+                    client -> client.get()
+                        .uri(uriBuilder -> uriBuilder
+                            .path("/api/websites/{websiteId}/pageviews")
+                            .queryParam("startAt", range.startAt)
+                            .queryParam("endAt", range.endAt)
+                            .queryParam("unit", range.seriesUnit)
+                            .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
+                            .build(id))
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .flatMap(body -> parseJsonBody(body, "获取访问趋势")),
+                    "获取访问趋势"
+                );
+            });
+    }
+
+    @Override
+    public Mono<JsonNode> getMetrics(String websiteId, String type, String metricType, int limit) {
+        int clampedLimit = Math.max(1, Math.min(limit, 20));
+        return resolveWebsiteId(websiteId)
+            .flatMap(id -> {
+                TimeRange range = resolveTimeRange(type);
+                return executeApiRequest(
+                    client -> client.get()
+                        .uri(uriBuilder -> uriBuilder
+                            .path("/api/websites/{websiteId}/metrics")
+                            .queryParam("startAt", range.startAt)
+                            .queryParam("endAt", range.endAt)
+                            .queryParam("type", metricType)
+                            .queryParam("limit", clampedLimit)
+                            .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
+                            .build(id))
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .flatMap(body -> parseJsonBody(body, "获取访客画像指标")),
+                    "获取访客画像指标"
+                );
+            });
+    }
 
     @Override
     public Mono<JsonNode> getRealtimeVisitStatistics(String websiteId) {
         return resolveWebsiteId(websiteId).flatMap(this::getRealtimeData);
     }
-    
-    private Mono<JsonNode> fetchVisitStatistics(String websiteId, long startAt, long endAt, String unit) {
-        return executeApiRequest(
-            client -> client.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path("/api/websites/{websiteId}/stats")
-                    .queryParam("startAt", startAt)
-                    .queryParam("endAt", endAt)
-                    .queryParam("unit", unit)
-                    .queryParam("timezone", Constants.DEFAULT_TIMEZONE)
-                    .build(websiteId))
-                .retrieve()
-                .bodyToMono(String.class)
-                .flatMap(body -> parseJsonBody(body, "获取访问统计")),
-            "获取访问统计"
-        );
-    }
-
 
     private Mono<String> resolveWebsiteId(String websiteId) {
         if (StrUtil.isNotBlank(websiteId)) {
@@ -238,4 +294,3 @@ public class UmamiServiceImpl implements UmamiService {
         }
     }
 }
-

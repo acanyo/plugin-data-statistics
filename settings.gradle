@@ -4,4 +4,4 @@ pluginManagement {
     }
 }
 rootProject.name = 'plugin-data-statistics'
-include 'ui'
+include 'ui', 'packages'

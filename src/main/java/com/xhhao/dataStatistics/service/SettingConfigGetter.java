@@ -14,6 +14,8 @@ public interface SettingConfigGetter {
         public static final String GROUP = "basics";
         private String title;
         private Boolean enableMomentHeatmap;
+        private String accentColor;
+        private String siteStartDate;
     }
     @Data
     class UmamiConfig {

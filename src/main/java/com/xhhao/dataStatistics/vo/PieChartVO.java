@@ -9,48 +9,70 @@ import java.util.List;
 public class PieChartVO {
 
     private Boolean enableMomentHeatmap;
+    private String accentColor;
+    private SiteSummary summary = new SiteSummary();
+
+    @Data
+    public static class SiteSummary {
+        private Integer totalPosts = 0;
+        private Long totalViews = 0L;
+        private Long totalUpvotes = 0L;
+        private Integer totalComments = 0;
+        private Integer totalTags = 0;
+        private Integer totalCategories = 0;
+        private Long runningDays = 0L;
+        private String siteStartDate;
+    }
 
     private List<Tag> tags = new ArrayList<>();
     @Data
     public static class Tag {
         private String name;
         private Integer count;
+        private String permalink;
     }
 
     private List<Category> categories = new ArrayList<>();
     @Data
     public static class Category {
         private String name;
-        private Integer total;  // 总数
+        private Integer total;
+        private String permalink;
     }
 
-    // 文章
     private List<Article> articles = new ArrayList<>();
     @Data
     public static class Article {
-        private String name;  // 名称
-        private LocalDateTime date;  // 日期
-        private Integer total;  // 总数
-        private Integer articleTotal;  // 文章数
-        private Integer momentTotal;  // 瞬间数
+        private String name;
+        private LocalDateTime date;
+        private Integer total;
+        private Integer articleTotal;
+        private Integer momentTotal;
     }
 
-    // 评论
+    private List<MonthlyTrend> monthlyTrend = new ArrayList<>();
+    @Data
+    public static class MonthlyTrend {
+        private String month;
+        private Integer articleCount;
+        private Integer momentCount;
+        private Integer total;
+    }
+
     private List<Comment> comments = new ArrayList<>();
     @Data
     public static class Comment {
-        private String name;  // 名称
-        private String email;  // 邮箱
-        private String username;  // 用户名
-        private Integer count;  // 数量
+        private String name;
+        private String email;
+        private String username;
+        private Integer count;
     }
 
-    // top10 文章
     private List<Top10Article> top10Articles = new ArrayList<>();
     @Data
     public static class Top10Article {
-        private String name;  // 名称
-        private Integer views;  // 访问量
+        private String name;
+        private Integer views;
+        private String permalink;
     }
-
 }

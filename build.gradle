@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id "io.freefair.lombok" version "8.13"
-    id "run.halo.plugin.devtools" version "0.6.2"
+    id "run.halo.plugin.devtools" version "0.9.0"
 }
 
 group 'com.xhhao.dataStatistics'
@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform('run.halo.tools.platform:plugin:2.23.0')
+    implementation platform('run.halo.tools.platform:plugin:2.27.3')
     compileOnly 'run.halo.app:api'
 
     implementation 'cn.hutool:hutool-all:5.8.41'
@@ -25,37 +25,6 @@ test {
     useJUnitPlatform()
 }
 
-// CSS 压缩任务
-tasks.register('minifyCss') {
-    description = '压缩 CSS 文件到 min 目录'
-    group = 'build'
-    
-    def cssDir = file('src/main/resources/static/css')
-    def minDir = file('src/main/resources/static/min')
-    
-    inputs.dir cssDir
-    outputs.dir minDir
-    
-    doLast {
-        minDir.mkdirs()
-        cssDir.listFiles({ it.name.endsWith('.css') } as FileFilter)?.each { cssFile ->
-            def content = cssFile.text
-            // 简单的 CSS 压缩：移除注释、多余空白、换行
-            def minified = content
-                .replaceAll('/\\*[\\s\\S]*?\\*/', '')     // 移除块注释
-                .replaceAll('//[^\n]*', '')               // 移除行注释
-                .replaceAll('\\s+', ' ')                  // 多个空白合并为一个
-                .replaceAll('\\s*([{};:,>~+])\\s*', '$1') // 移除符号周围空白
-                .replaceAll(';\\}', '}')                  // 移除最后一个分号
-                .trim()
-            
-            def minFile = new File(minDir, cssFile.name.replace('.css', '.min.css'))
-            minFile.text = minified
-            println "已压缩: ${cssFile.name} -> ${minFile.name}"
-        }
-    }
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -67,7 +36,11 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
-tasks.register('processUiResources', Copy) {
+tasks.named('processResources') {
+    dependsOn project(':packages').tasks.named('assemble')
+}
+
+tasks.register('processUiResources', Sync) {
     from project(':ui').layout.buildDirectory.dir('dist')
     into layout.buildDirectory.dir('resources/main/console')
     dependsOn project(':ui').tasks.named('assemble')
@@ -76,15 +49,9 @@ tasks.register('processUiResources', Copy) {
 
 tasks.named('classes') {
     dependsOn tasks.named('processUiResources')
-    dependsOn tasks.named('minifyCss')  // 构建时自动压缩 CSS
-}
-
-// 确保 processResources 在 minifyCss 之后执行
-tasks.named('processResources') {
-    dependsOn tasks.named('minifyCss')
 }
 
 halo {
-    version = '2.23.0'
+    version = '2.27.3'
     debug = true
 }

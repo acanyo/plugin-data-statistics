@@ -1,0 +1,43 @@
+{
+  "name": "@xhhaocom/data-statistics",
+  "author": {
+    "name": "Handsome",
+    "url": "https://www.xhhao.com"
+  },
+  "maintainers": [
+    {
+      "name": "Handsome",
+      "url": "https://www.xhhao.com"
+    }
+  ],
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/data-statistics.js"
+    }
+  },
+  "main": "./dist/data-statistics.js",
+  "module": "./dist/data-statistics.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "lit": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2",
+    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-static-copy": "^1.0.6"
+  }
+}
