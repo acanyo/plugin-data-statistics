@@ -18,7 +18,7 @@ spec:
   settingName: plugin-dataStatistics-settings
   configMapName: plugin-dataStatistics-configMap
   displayName: "数据看板"
-  description: "为 Halo2 提供强大的数据可视化统计功能，支持 Umami 流量统计、uptime、网站内部数据图表（标签、分类、文章趋势、评论排行、热门文章等），可在编辑器中灵活插入"
+  description: "基于 Lit 3 Web Components 与两级按需加载的 Halo 2 数据可视化统计插件，支持站内全套图表（概览/标签/分类/热力图/月度趋势/评论/热门文章/长图导出）、Umami 流量趋势与访客画像、Uptime Kuma 状态监控、GitHub 统计卡片及后台独立数据看板。"
   license:
     - name: "GPL-3.0"
       url: "https://github.com/Handsome/data-statistics/blob/main/LICENSE"
