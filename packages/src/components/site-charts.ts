@@ -83,7 +83,6 @@ export class SiteCharts extends LitElement {
   @state() private pinnedTagIndex: number | null = null;
   @state() private categoriesExpanded = false;
   @state() private heatmapFilter: HeatmapFilter = 'all';
-  @state() private heatmapCellPx = 12;
   @state() private tooltip: TooltipState = {
     visible: false,
     below: false,
@@ -99,8 +98,6 @@ export class SiteCharts extends LitElement {
   private commentsChart: Chart | null = null;
   private chartMountSeq = 0;
   private stopVisibility?: () => void;
-  private heatmapResizeObserver?: ResizeObserver;
-  private observedHeatmapEl: Element | null = null;
 
   constructor() {
     super();
@@ -123,9 +120,6 @@ export class SiteCharts extends LitElement {
     this.stopVisibility = undefined;
     this.chartMountSeq += 1;
     this.destroyCharts();
-    this.heatmapResizeObserver?.disconnect();
-    this.heatmapResizeObserver = undefined;
-    this.observedHeatmapEl = null;
   }
 
   protected updated(changed: Map<string, unknown>): void {
@@ -137,7 +131,6 @@ export class SiteCharts extends LitElement {
       if (!this.loading && this.chartData) {
         this.applyAccentOverride();
         void this.mountCharts();
-        this.attachHeatmapObserver();
       }
     }
   }
@@ -591,33 +584,6 @@ export class SiteCharts extends LitElement {
       if (yScale?.ticks) yScale.ticks.color = colors.textPrimary;
       this.commentsChart.update('none');
     }
-  }
-
-  private attachHeatmapObserver(): void {
-    const scrollEl = this.renderRoot.querySelector('.heatmap-scroll');
-    if (!scrollEl || scrollEl === this.observedHeatmapEl) return;
-
-    this.heatmapResizeObserver?.disconnect();
-    this.observedHeatmapEl = scrollEl;
-
-    const recalc = () => {
-      const rect = scrollEl.getBoundingClientRect();
-      if (rect.width <= 0) return;
-      if (window.innerWidth <= 768) {
-        this.heatmapCellPx = 11;
-        return;
-      }
-      const weeksCount = 53;
-      const weekdayWidth = 24;
-      const gap = 3;
-      const available = rect.width - weekdayWidth - 8;
-      const cell = Math.floor((available - (weeksCount - 1) * gap) / weeksCount);
-      this.heatmapCellPx = Math.max(9, Math.min(14, cell));
-    };
-
-    this.heatmapResizeObserver = new ResizeObserver(recalc);
-    this.heatmapResizeObserver.observe(scrollEl);
-    recalc();
   }
 
   /* ========================================================================
@@ -1303,7 +1269,7 @@ export class SiteCharts extends LitElement {
     };
 
     const showFilter = enableMoments && hasAnyMoments;
-    const gridTemplate = `repeat(${weeksCount}, ${this.heatmapCellPx}px)`;
+    const gridTemplate = `repeat(${weeksCount}, minmax(9px, 1fr))`;
 
     return html`
       <section class="section">
@@ -1369,11 +1335,7 @@ export class SiteCharts extends LitElement {
 
               <div class="section__body">
                 <div class="heatmap-scroll">
-                  <div
-                    class="heatmap-card"
-                    style="--hm-cell:${this.heatmapCellPx}px;--hm-gap:3px"
-                    @mouseleave=${this.handleHeatmapLeave}
-                  >
+                  <div class="heatmap-card" @mouseleave=${this.handleHeatmapLeave}>
                     ${this.tooltip.visible
                       ? html`
                           <div

@@ -415,7 +415,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 1240px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ds-admin-uptime {
