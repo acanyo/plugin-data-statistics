@@ -671,7 +671,7 @@ export const siteChartsStyles = [
       grid-column: 1;
       grid-row: 2;
       display: grid;
-      grid-template-rows: repeat(7, var(--hm-cell, 12px));
+      grid-template-rows: repeat(7, 1fr);
       row-gap: var(--hm-gap, 3px);
       padding-right: 4px;
       font-size: 10.5px;
@@ -681,8 +681,9 @@ export const siteChartsStyles = [
     }
 
     .heatmap__weekday {
-      height: var(--hm-cell, 12px);
-      line-height: var(--hm-cell, 12px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .heatmap__weekday.is-hidden {
@@ -698,13 +699,13 @@ export const siteChartsStyles = [
 
     .heatmap__column {
       display: grid;
-      grid-template-rows: repeat(7, var(--hm-cell, 12px));
+      grid-template-rows: repeat(7, auto);
       row-gap: var(--hm-gap, 3px);
     }
 
     .heatmap__day {
-      width: var(--hm-cell, 12px);
-      height: var(--hm-cell, 12px);
+      width: 100%;
+      aspect-ratio: 1;
       border-radius: 2.5px;
       background: var(--ds-heatmap-l0);
       box-shadow: inset 0 0 0 1px var(--ds-heatmap-ring);
