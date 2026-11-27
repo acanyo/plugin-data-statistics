@@ -2,6 +2,7 @@ import { LitElement, html, nothing, svg } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { fetchUmamiRealtime } from '../api';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import {
   buildVisitorTags,
   formatExact,
@@ -37,6 +38,7 @@ export class ActivityStatistics extends LitElement {
   @state() private deviceFilter: DeviceFilter = 'all';
 
   private pollTimer?: ReturnType<typeof setInterval>;
+  private stopVisibility?: () => void;
 
   constructor() {
     super();
@@ -45,14 +47,18 @@ export class ActivityStatistics extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    void this.loadData();
-    this.pollTimer = setInterval(() => {
-      void this.loadData(false);
-    }, 30000);
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadData();
+      this.pollTimer = setInterval(() => {
+        void this.loadData(false);
+      }, 30000);
+    });
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
     if (this.pollTimer) {
       clearInterval(this.pollTimer);
       this.pollTimer = undefined;

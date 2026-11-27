@@ -1,59 +1,62 @@
 import { fileURLToPath } from 'url';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 
-
-function copyToStatic(): Plugin {
+function syncToStaticEsm(): Plugin {
   return {
-    name: 'copy-to-static',
+    name: 'sync-to-static-esm',
     closeBundle() {
       const distDir = join(process.cwd(), 'dist');
       const staticDir = fileURLToPath(new URL('../src/main/resources/static', import.meta.url));
+      const esmTargetDir = join(staticDir, 'esm');
 
-      // 确保 static 目录存在
       if (!existsSync(staticDir)) {
         mkdirSync(staticDir, { recursive: true });
       }
 
-      const file = 'data-statistics.umd.js';
-      const src = join(distDir, file);
-      const dest = join(staticDir, file);
-      if (existsSync(src)) {
-        copyFileSync(src, dest);
-        console.log(`✓ Copied ${file} to ${staticDir}`);
+      // Remove legacy single-file UMD bundle if present
+      const legacyUmd = join(staticDir, 'data-statistics.umd.js');
+      if (existsSync(legacyUmd)) {
+        rmSync(legacyUmd, { force: true });
       }
-    },
+
+      // Cleanly sync ESM loader and lazy chunks
+      rmSync(esmTargetDir, { recursive: true, force: true });
+      cpSync(distDir, esmTargetDir, { recursive: true });
+      console.log(`✓ Synced on-demand ESM bundle to ${esmTargetDir}`);
+    }
   };
 }
 
 export default defineConfig({
   build: {
+    target: 'es2022',
+    emptyOutDir: true,
     lib: {
-      entry: './src/index.ts',
-      name: 'DataStatistics',
-      fileName: (format) => {
-        if (format === 'es') {
-          return 'data-statistics.js';
-        }
-        return 'data-statistics.umd.js';
-      },
-      formats: ['es', 'umd']
+      entry: './src/loader.ts',
+      formats: ['es'],
+      fileName: () => 'loader.js'
     },
     rollupOptions: {
       output: {
-        // 确保样式和资源正确输出
-        assetFileNames: 'data-statistics.[ext]'
+        chunkFileNames: 'chunks/[name]-[hash].js',
+        assetFileNames: 'chunks/[name]-[hash][extname]',
+        manualChunks(id) {
+          if (id.includes('node_modules/chart.js') || id.includes('node_modules/@kurkle/color')) {
+            return 'chart';
+          }
+          if (id.includes('node_modules/lit') || id.includes('node_modules/@lit')) {
+            return 'lit';
+          }
+          return undefined;
+        }
       }
     }
   },
-  plugins: [
-    copyToStatic(),
-  ],
-  // 开发服务器配置
+  plugins: [syncToStaticEsm()],
   server: {
     port: 3001
   }
 });
-

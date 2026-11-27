@@ -1,11 +1,3 @@
-function onReady(callback: () => void): void {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', callback, { once: true });
-    return;
-  }
-  callback();
-}
-
 function copyAttributeIfPresent(
   source: HTMLElement,
   target: HTMLElement,
@@ -113,31 +105,4 @@ export function upgradeLegacyPlaceholders(root: ParentNode = document): void {
   upgradeActivity(root);
   upgradeUptime(root);
   upgradeSiteCharts(root);
-}
-
-declare global {
-  interface Window {
-    xhhaocomDataStatisticsV2Init?: () => void;
-  }
-}
-
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  window.xhhaocomDataStatisticsV2Init = () => upgradeLegacyPlaceholders(document);
-
-  onReady(() => {
-    upgradeLegacyPlaceholders(document);
-
-    if (typeof MutationObserver === 'undefined' || !document.body) {
-      return;
-    }
-
-    const observer = new MutationObserver(() => {
-      upgradeLegacyPlaceholders(document);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  });
 }

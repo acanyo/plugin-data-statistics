@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { fetchUptimeStatus } from '../api';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import type { UptimeStatus } from '../types';
 import { uptimeStyles } from '../styles/uptime-styles';
 
@@ -14,6 +15,7 @@ export class UptimeStatistics extends LitElement {
   @state() private statusData: UptimeStatus | null = null;
 
   private pollTimer?: ReturnType<typeof setInterval>;
+  private stopVisibility?: () => void;
 
   constructor() {
     super();
@@ -22,14 +24,18 @@ export class UptimeStatistics extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    void this.loadStatus();
-    this.pollTimer = setInterval(() => {
-      void this.loadStatus(false);
-    }, 60000);
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadStatus();
+      this.pollTimer = setInterval(() => {
+        void this.loadStatus(false);
+      }, 60000);
+    });
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
     if (this.pollTimer) {
       clearInterval(this.pollTimer);
       this.pollTimer = undefined;

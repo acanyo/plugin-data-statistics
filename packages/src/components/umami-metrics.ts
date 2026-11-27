@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { fetchUmamiMetrics } from '../api';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import {
   formatExact,
   formatNumber,
@@ -41,6 +42,7 @@ export class UmamiMetrics extends LitElement {
   @state() private items: UmamiMetricItem[] = [];
 
   private cache = new Map<string, UmamiMetricItem[]>();
+  private stopVisibility?: () => void;
 
   constructor() {
     super();
@@ -53,7 +55,15 @@ export class UmamiMetrics extends LitElement {
     if (isValidHexColor(this.accentColor)) {
       this.style.setProperty('--ds-custom-accent', this.accentColor.trim());
     }
-    void this.loadMetrics(true);
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadMetrics(true);
+    });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
   }
 
   protected updated(changed: Map<string, unknown>): void {

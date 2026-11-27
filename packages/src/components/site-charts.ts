@@ -1,22 +1,10 @@
 import { LitElement, html, nothing, svg } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import {
-  Chart,
-  DoughnutController,
-  ArcElement,
-  BarController,
-  BarElement,
-  LineController,
-  LineElement,
-  PointElement,
-  Filler,
-  CategoryScale,
-  LinearScale,
-  Tooltip
-} from 'chart.js';
-import type { Plugin } from 'chart.js';
+import type { Chart, Plugin } from 'chart.js';
 import { fetchChartData } from '../api';
+import { loadChartJs } from '../chart-loader';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import {
   formatDateYMD,
   formatExact,
@@ -27,20 +15,6 @@ import {
 } from '../utils';
 import type { ChartData, MonthlyTrendData } from '../types';
 import { siteChartsStyles } from '../styles/site-charts-styles';
-
-Chart.register(
-  DoughnutController,
-  ArcElement,
-  BarController,
-  BarElement,
-  LineController,
-  LineElement,
-  PointElement,
-  Filler,
-  CategoryScale,
-  LinearScale,
-  Tooltip
-);
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const WEEKDAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -123,6 +97,8 @@ export class SiteCharts extends LitElement {
   private tagsChart: Chart | null = null;
   private monthlyChart: Chart | null = null;
   private commentsChart: Chart | null = null;
+  private chartMountSeq = 0;
+  private stopVisibility?: () => void;
   private heatmapResizeObserver?: ResizeObserver;
   private observedHeatmapEl: Element | null = null;
 
@@ -136,11 +112,16 @@ export class SiteCharts extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     this.applyAccentOverride();
-    void this.loadData();
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadData();
+    });
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
+    this.chartMountSeq += 1;
     this.destroyCharts();
     this.heatmapResizeObserver?.disconnect();
     this.heatmapResizeObserver = undefined;
@@ -155,7 +136,7 @@ export class SiteCharts extends LitElement {
     if (changed.has('chartData') || changed.has('dataTypes') || changed.has('loading')) {
       if (!this.loading && this.chartData) {
         this.applyAccentOverride();
-        this.mountCharts();
+        void this.mountCharts();
         this.attachHeatmapObserver();
       }
     }
@@ -312,13 +293,30 @@ export class SiteCharts extends LitElement {
     };
   }
 
-  private mountCharts(): void {
+  private async mountCharts(): Promise<void> {
+    const seq = ++this.chartMountSeq;
     this.destroyCharts();
+
+    const tagsCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#tags-canvas');
+    const monthlyCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#monthly-trend-canvas');
+    const commentsCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#comments-canvas');
+
+    const tags = this.normalizedTags;
+    const monthly = this.normalizedMonthlyTrend;
+    const comments = this.normalizedComments;
+
+    const needsChart =
+      Boolean(tagsCanvas && tags.length > 0) ||
+      Boolean(monthlyCanvas && monthly.length > 0) ||
+      Boolean(commentsCanvas && comments.length > 0);
+    if (!needsChart) return;
+
+    const Chart = await loadChartJs();
+    if (seq !== this.chartMountSeq || !this.isConnected) return;
+
     const colors = this.getChartColors();
 
     // 1. Tags Doughnut
-    const tagsCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#tags-canvas');
-    const tags = this.normalizedTags;
     if (tagsCanvas && tags.length > 0) {
       const totalTagPosts = tags.reduce((sum, item) => sum + item.count, 0);
       this.tagsChart = new Chart(tagsCanvas, {
@@ -376,8 +374,6 @@ export class SiteCharts extends LitElement {
     }
 
     // 2. Monthly Publishing Trend Area Chart
-    const monthlyCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#monthly-trend-canvas');
-    const monthly = this.normalizedMonthlyTrend;
     if (monthlyCanvas && monthly.length > 0) {
       const hasMoments = Boolean(this.chartData?.enableMomentHeatmap) && monthly.some((m) => m.momentCount > 0);
       const datasets = [
@@ -457,8 +453,6 @@ export class SiteCharts extends LitElement {
     }
 
     // 3. Comments Horizontal Bar with right-end direct value labels
-    const commentsCanvas = this.renderRoot.querySelector<HTMLCanvasElement>('#comments-canvas');
-    const comments = this.normalizedComments;
     if (commentsCanvas && comments.length > 0) {
       const buildFills = (accent: string) =>
         comments.map((_, i) => {

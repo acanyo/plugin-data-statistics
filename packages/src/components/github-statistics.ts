@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { fetchGithubConfig } from '../api';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import type { GithubConfig } from '../types';
 import { githubStyles } from '../styles/github-styles';
 
@@ -52,6 +53,8 @@ export class GithubStatistics extends LitElement {
   @state() private imageStates: Record<string, 'loading' | 'loaded' | 'error'> = {};
   @state() private retryTokens: Record<string, number> = {};
 
+  private stopVisibility?: () => void;
+
   constructor() {
     super();
     new ThemeController(this);
@@ -59,7 +62,15 @@ export class GithubStatistics extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    void this.loadConfig();
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadConfig();
+    });
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
   }
 
   private get orderedTypes(): GithubCardType[] {

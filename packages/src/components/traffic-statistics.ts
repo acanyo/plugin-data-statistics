@@ -1,17 +1,10 @@
 import { LitElement, html, nothing, svg } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import {
-  Chart,
-  LineController,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Filler,
-  Tooltip
-} from 'chart.js';
+import type { Chart } from 'chart.js';
 import { fetchUmamiPageviewsTrend, fetchUmamiRealtime, fetchUmamiVisits } from '../api';
+import { loadChartJs } from '../chart-loader';
 import { ThemeController } from '../theme-controller';
+import { observeOnceVisible } from '../visibility';
 import {
   computeDeltaPercent,
   extractPrevValue,
@@ -27,16 +20,6 @@ import {
 } from '../utils';
 import type { PageviewsTrendData, RealtimeData, TrafficData, TrafficType } from '../types';
 import { trafficStyles } from '../styles/traffic-styles';
-
-Chart.register(
-  LineController,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Filler,
-  Tooltip
-);
 
 const VALID_TYPES = new Set<TrafficType>(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']);
 
@@ -79,6 +62,8 @@ export class TrafficStatistics extends LitElement {
   private themeController: ThemeController;
   private periodCache = new Map<TrafficType, { visits: TrafficData; trend: PageviewsTrendData | null }>();
   private trendChart: Chart | null = null;
+  private chartMountSeq = 0;
+  private stopVisibility?: () => void;
   private pollTimer?: ReturnType<typeof setInterval>;
   private animFrameId?: number;
 
@@ -95,14 +80,19 @@ export class TrafficStatistics extends LitElement {
     if (isValidHexColor(this.accentColor)) {
       this.style.setProperty('--ds-custom-accent', this.accentColor.trim());
     }
-    void this.loadInitial();
-    this.pollTimer = setInterval(() => {
-      void this.refreshRealtime();
-    }, 30000);
+    this.stopVisibility = observeOnceVisible(this, () => {
+      void this.loadInitial();
+      this.pollTimer = setInterval(() => {
+        void this.refreshRealtime();
+      }, 30000);
+    });
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.stopVisibility?.();
+    this.stopVisibility = undefined;
+    this.chartMountSeq += 1;
     this.trendChart?.destroy();
     this.trendChart = null;
     if (this.pollTimer) {
@@ -130,8 +120,9 @@ export class TrafficStatistics extends LitElement {
     }
     if (changed.has('trendData') || changed.has('loading')) {
       if (!this.loading && this.hasTrendPoints) {
-        this.mountTrendChart();
+        void this.mountTrendChart();
       } else if (!this.hasTrendPoints && this.trendChart) {
+        this.chartMountSeq += 1;
         this.trendChart.destroy();
         this.trendChart = null;
       }
@@ -171,11 +162,17 @@ export class TrafficStatistics extends LitElement {
     };
   }
 
-  private mountTrendChart(): void {
+  private async mountTrendChart(): Promise<void> {
+    const seq = ++this.chartMountSeq;
     const canvas = this.renderRoot.querySelector<HTMLCanvasElement>('#umami-trend-canvas');
     if (!canvas || !this.trendData) return;
 
     this.trendChart?.destroy();
+    this.trendChart = null;
+
+    const Chart = await loadChartJs();
+    if (seq !== this.chartMountSeq || !this.isConnected) return;
+
     const colors = this.getTrendChartColors();
     const pvPoints = this.trendData.pageviews || [];
     const sessPoints = this.trendData.sessions || [];
